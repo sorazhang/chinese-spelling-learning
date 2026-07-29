@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="dark"/>
+<title>听写 DICTATION – Char 4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#030912;color:#fff;font-family:sans-serif;padding:16px;min-height:100vh}
+h1{font-size:22px;color:#ffa500;text-align:center;margin-bottom:4px}
+#status{text-align:center;font-size:12px;color:#3d2800;letter-spacing:3px;margin-bottom:16px}
+#word-num{text-align:center;font-size:11px;color:#44667a;margin-bottom:14px}
+
+/* speak */
+#speak-btn{display:block;width:100px;height:100px;border-radius:50%;background:rgba(255,165,0,.15);border:3px solid #ffa500;color:#ffa500;font-size:38px;cursor:pointer;margin:0 auto 10px}
+#play-lbl{text-align:center;font-size:11px;color:#3d2800;margin-bottom:6px}
+#hint-btn{display:block;margin:0 auto 16px;padding:5px 14px;background:transparent;border:1px solid rgba(136,68,255,.5);border-radius:20px;color:#8844ff;font-size:11px;cursor:pointer}
+#hint-txt{text-align:center;font-size:16px;color:rgba(136,68,255,.8);letter-spacing:2px;margin-bottom:16px;min-height:24px}
+
+/* canvas */
+#canvas-wrap{border:2px solid rgba(255,165,0,.3);border-radius:12px;overflow:hidden;margin-bottom:10px;position:relative}
+canvas{display:block;width:100%;background:#030912;touch-action:none}
+#spin{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);text-align:center;padding-top:80px;font-size:13px;color:#ffa500}
+
+/* buttons */
+.row{display:flex;gap:8px;margin-bottom:8px}
+.btn{flex:1;padding:10px;border-radius:10px;font-size:12px;cursor:pointer;text-align:center;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:#888}
+#ai-btn{display:block;width:100%;padding:12px;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer;margin-bottom:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);color:#555;letter-spacing:1px}
+#ai-btn.ready{background:rgba(255,165,0,.15);border-color:#ffa500;color:#ffa500}
+
+/* self grade */
+#sg{display:none;margin-bottom:8px}
+#sg p{font-size:10px;color:#3d2800;text-align:center;margin-bottom:6px;letter-spacing:2px}
+.sg-row{display:flex;gap:8px}
+.sg-btn{flex:1;padding:9px 4px;border-radius:10px;font-size:11px;cursor:pointer;text-align:center}
+
+/* feedback */
+#fb{display:none;border-radius:12px;padding:14px;margin-bottom:10px;text-align:center}
+#fb .ans{background:rgba(255,165,0,.07);border:1px solid rgba(255,165,0,.2);border-radius:10px;padding:12px;margin-top:10px}
+#fb .ans .ch{font-family:serif;font-size:36px;letter-spacing:4px}
+#fb .ans .py{font-size:11px;color:#3d2800;margin-top:4px}
+
+#next-btn{display:none;width:100%;padding:14px;border-radius:12px;font-size:14px;font-weight:bold;cursor:pointer;text-align:center;background:rgba(255,165,0,.12);border:1.5px solid #ffa500;color:#ffa500;letter-spacing:2px}
+#xp-bar{text-align:center;font-size:13px;color:#ffa500;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<h1>听写 DICTATION</h1>
+<div id="status">CHAR 4 · LISTEN AND WRITE</div>
+<div id="xp-bar">⚡ <span id="xp-num">0</span> XP</div>
+<div id="word-num"></div>
+
+<button id="speak-btn" onclick="speak()">🔊</button>
+<div id="play-lbl">TAP TO HEAR THE WORD</div>
+<button id="hint-btn" onclick="toggleHint()">💡 Show pinyin hint</button>
+<div id="hint-txt"></div>
+
+<div id="canvas-wrap">
+  <canvas id="cv" width="800" height="260" style="height:260px"></canvas>
+  <div id="spin">Checking...</div>
+</div>
+
+<div class="row">
+  <button class="btn" onclick="clearAll()">🗑️ Clear</button>
+  <button class="btn" id="erase-btn" onclick="toggleErase()">⬜ Erase</button>
+</div>
+<input type="range" min="10" max="120" value="40" id="esz" oninput="esz=+this.value" style="width:100%;accent-color:#ffa500;margin-bottom:8px">
+
+<button id="ai-btn" onclick="doCheck()">🤖 AI CHECK</button>
+
+<div id="sg">
+  <p>OR SELF-GRADE</p>
+  <div class="sg-row">
+    <button class="sg-btn" onclick="grade('correct')" style="border:1px solid #00ff8844;color:#00ff88">✅ Got it</button>
+    <button class="sg-btn" onclick="grade('partial')" style="border:1px solid #ffcc0044;color:#ffcc00">💪 Almost</button>
+    <button class="sg-btn" onclick="grade('incorrect')" style="border:1px solid #ff446644;color:#ff4466">❌ Not yet</button>
+  </div>
+</div>
+
+<div id="fb">
+  <div id="fb-icon" style="font-size:28px;margin-bottom:6px"></div>
+  <div id="fb-lbl" style="font-size:14px;font-weight:bold;margin-bottom:6px"></div>
+  <div id="fb-msg" style="font-size:13px;color:#7799aa;margin-bottom:10px"></div>
+  <div class="ans">
+    <div style="font-size:9px;color:#3d2800;letter-spacing:3px;margin-bottom:8px">CORRECT ANSWER</div>
+    <div class="ch" id="fb-ch"></div>
+    <div class="py" id="fb-py"></div>
+  </div>
+</div>
+
+<button id="next-btn" onclick="next()">NEXT WORD →</button>
+
+<script>
+var VOCAB=[
+  {char:"环保袋",py:"huán bǎo dài",en:"eco / reusable bag"},
+  {char:"组屋楼下",py:"zǔ wū lóu xià",en:"downstairs of the flat"},
+  {char:"停车场",py:"tíng chē chǎng",en:"car park"},
+  {char:"几辆汽车",py:"jǐ liàng qì chē",en:"several cars"},
+  {char:"灯一直亮着",py:"dēng yī zhí liàng zhe",en:"lights kept on"},
+  {char:"所以",py:"suǒ yǐ",en:"therefore / so"},
+  {char:"一张纸",py:"yī zhāng zhǐ",en:"a piece of paper"},
+  {char:"日用品",py:"rì yòng pǐn",en:"daily necessities"},
+  {char:"认为",py:"rèn wéi",en:"to think / believe"},
+  {char:"责任感",py:"zé rèn gǎn",en:"sense of responsibility"},
+  {char:"我们一起回家吧",py:"wǒ men yī qǐ huí jiā ba",en:"let's go home together"},
+  {char:"如果我有很多钱",py:"rú guǒ wǒ yǒu hěn duō qián",en:"if I had a lot of money"},
+  {char:"我就买一辆车",py:"wǒ jiù mǎi yī liàng chē",en:"I would buy a car"},
+];
+
+var queue=[],qi=0,xp=0,drawn=false,erasing=false,esz=40,speaking=false,hinting=false;
+
+function shuffle(a){var r=a.slice();for(var i=r.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=r[i];r[i]=r[j];r[j]=t;}return r;}
+try{xp=parseInt(localStorage.getItem('d4xp'))||0;}catch(e){}
+function saveXP(){try{localStorage.setItem('d4xp',xp);}catch(e){}}
+
+// canvas
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var drawing=false,lx=0,ly=0;
+
+function getP(e){var r=cv.getBoundingClientRect();var s=e.touches?e.touches[0]:e;return{x:(s.clientX-r.left)*(cv.width/r.width),y:(s.clientY-r.top)*(cv.height/r.height)};}
+cv.onmousedown=function(e){e.preventDefault();drawing=true;var p=getP(e);lx=p.x;ly=p.y;if(!erasing)enableCheck();}
+cv.onmousemove=function(e){e.preventDefault();if(!drawing)return;doDraw(e);}
+cv.onmouseup=cv.onmouseleave=function(e){e.preventDefault();drawing=false;}
+cv.addEventListener('touchstart',function(e){e.preventDefault();drawing=true;var p=getP(e);lx=p.x;ly=p.y;if(!erasing)enableCheck();},{passive:false});
+cv.addEventListener('touchmove',function(e){e.preventDefault();if(!drawing)return;doDraw(e);},{passive:false});
+cv.addEventListener('touchend',function(e){e.preventDefault();drawing=false;},{passive:false});
+
+function doDraw(e){var p=getP(e);if(erasing){ctx.clearRect(p.x-esz/2,p.y-esz/2,esz,esz);}else{drawn=true;ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(p.x,p.y);ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.lineCap='round';ctx.stroke();}lx=p.x;ly=p.y;}
+
+function enableCheck(){drawn=true;var b=document.getElementById('ai-btn');b.className='ready';b.disabled=false;document.getElementById('sg').style.display='block';}
+function clearAll(){ctx.clearRect(0,0,cv.width,cv.height);drawGrid();drawn=false;var b=document.getElementById('ai-btn');b.className='';b.disabled=true;document.getElementById('sg').style.display='none';document.getElementById('canvas-wrap').style.borderColor='rgba(255,165,0,.3)';document.getElementById('canvas-wrap').style.boxShadow='none';}
+function drawGrid(){if(!queue[qi])return;var n=queue[qi].char.length;var cw=cv.width/n;ctx.strokeStyle='rgba(255,165,0,.1)';ctx.lineWidth=1;for(var i=1;i<n;i++){ctx.beginPath();ctx.moveTo(i*cw,0);ctx.lineTo(i*cw,cv.height);ctx.stroke();}for(var i=0;i<n;i++){ctx.beginPath();ctx.moveTo(i*cw,0);ctx.lineTo((i+1)*cw,cv.height);ctx.stroke();ctx.beginPath();ctx.moveTo((i+1)*cw,0);ctx.lineTo(i*cw,cv.height);ctx.stroke();ctx.beginPath();ctx.moveTo(i*cw,cv.height/2);ctx.lineTo((i+1)*cw,cv.height/2);ctx.stroke();ctx.beginPath();ctx.moveTo(i*cw+cw/2,0);ctx.lineTo(i*cw+cw/2,cv.height);ctx.stroke();}}
+function toggleErase(){erasing=!erasing;document.getElementById('erase-btn').textContent=erasing?'✏️ Draw':'⬜ Erase';document.getElementById('erase-btn').style.color=erasing?'#ffcc00':'#888';document.getElementById('erase-btn').style.borderColor=erasing?'#ffcc00':'rgba(255,255,255,.15)';}
+
+// speech
+function speak(){
+  var item=queue[qi];if(!item||speaking)return;
+  speaking=true;
+  document.getElementById('play-lbl').textContent='Playing... tap to replay';
+  if(!window.speechSynthesis){speaking=false;document.getElementById('play-lbl').textContent='Speech not available — use hint';return;}
+  window.speechSynthesis.cancel();
+  function go(){var u=new SpeechSynthesisUtterance(item.char);u.lang='zh-CN';u.rate=0.5;var vv=window.speechSynthesis.getVoices();for(var i=0;i<vv.length;i++){if(vv[i].lang&&vv[i].lang.indexOf('zh')===0){u.voice=vv[i];break;}}u.onend=u.onerror=function(){speaking=false;document.getElementById('play-lbl').textContent='Tap to replay';};window.speechSynthesis.speak(u);setTimeout(function(){if(window.speechSynthesis.paused)window.speechSynthesis.resume();},300);}
+  var vv=window.speechSynthesis.getVoices();
+  if(!vv.length){var done=false;window.speechSynthesis.onvoiceschanged=function(){if(!done){done=true;go();}};setTimeout(function(){if(!done){done=true;go();}},800);}else{go();}
+}
+function toggleHint(){hinting=!hinting;var item=queue[qi];document.getElementById('hint-txt').textContent=hinting?item.py:'';document.getElementById('hint-btn').textContent=hinting?'🙈 Hide hint':'💡 Show pinyin hint';}
+
+// AI check
+async function doCheck(){
+  if(!drawn)return;
+  document.getElementById('spin').style.display='block';
+  try{
+    var b64=cv.toDataURL('image/png').split(',')[1];
+    var item=queue[qi];
+    var prompt='Child wrote '+JSON.stringify(item.char)+' ('+item.py+') from audio across '+item.char.length+' boxes. Be maximally generous: correct if ANY strokes. Only incorrect if box totally blank. Default correct. Reply ONLY valid JSON: {"grade":"correct","comment":"Short praise max 6 words."}';
+    var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:200,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/png',data:b64}},{type:'text',text:prompt}]}]})});
+    var d=await r.json();
+    var raw=(d.content||[]).find(function(b){return b.type==='text';});
+    var p=JSON.parse((raw?raw.text:'{}').replace(/```json/g,'').replace(/```/g,'').trim());
+    grade(p.grade||'incorrect',p.comment||'Keep going!');
+  }catch(e){grade('error','Could not check — self-grade instead.');}
+  document.getElementById('spin').style.display='none';
+}
+function grade(g,msg){
+  var GC={correct:'#00ff88',partial:'#ffcc00',incorrect:'#ff4466',error:'#ff9900'};
+  var GE={correct:'⭐',partial:'💪',incorrect:'❌',error:'⚠️'};
+  var GL={correct:'CORRECT! +30 XP',partial:'PARTIAL! +10 XP',incorrect:'KEEP PRACTISING',error:'CHECK BELOW'};
+  var col=GC[g]||'#ff9900';
+  if(g==='correct')xp+=30;else if(g==='partial')xp+=10;
+  saveXP();document.getElementById('xp-num').textContent=xp;
+  document.getElementById('canvas-wrap').style.borderColor=col;
+  document.getElementById('canvas-wrap').style.boxShadow='0 0 18px '+col+'44';
+  var fb=document.getElementById('fb');fb.style.display='block';fb.style.background='rgba(255,255,255,.04)';fb.style.border='1px solid '+col+'55';
+  document.getElementById('fb-icon').textContent=GE[g]||'⚠️';
+  document.getElementById('fb-lbl').textContent=GL[g]||'';document.getElementById('fb-lbl').style.color=col;
+  document.getElementById('fb-msg').textContent=msg||'';
+  var item=queue[qi];
+  document.getElementById('fb-ch').textContent=item.char;document.getElementById('fb-ch').style.color=col;
+  document.getElementById('fb-py').textContent=item.py+' · '+item.en;
+  document.getElementById('ai-btn').style.display='none';
+  document.getElementById('sg').style.display='none';
+  var nb=document.getElementById('next-btn');nb.style.display='block';nb.textContent=qi+1<queue.length?'NEXT WORD →':'🔁 START AGAIN';
+}
+function next(){
+  if(qi+1<queue.length){qi++;loadWord();}
+  else{qi=0;queue=shuffle(VOCAB);loadWord();}
+}
+function loadWord(){
+  var item=queue[qi];
+  document.getElementById('word-num').textContent='WORD '+(qi+1)+' / '+queue.length;
+  document.getElementById('play-lbl').textContent='TAP TO HEAR THE WORD';
+  document.getElementById('hint-txt').textContent='';hinting=false;
+  document.getElementById('hint-btn').textContent='💡 Show pinyin hint';
+  document.getElementById('fb').style.display='none';
+  document.getElementById('next-btn').style.display='none';
+  document.getElementById('ai-btn').style.display='block';
+  var b=document.getElementById('ai-btn');b.className='';b.disabled=true;
+  document.getElementById('sg').style.display='none';
+  clearAll();
+}
+
+// start
+queue=shuffle(VOCAB);
+document.getElementById('xp-num').textContent=xp;
+loadWord();
+</script>
+</body>
+</html>

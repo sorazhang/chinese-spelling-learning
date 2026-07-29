@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="dark"/>
+<title>手写 TRACE – Char 4</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Exo+2:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:radial-gradient(ellipse at 30% 10%,#0c1d30,#050a14 50%,#010306);color:#fff;font-family:'Exo 2',sans-serif;overflow-x:hidden}
+.star{position:fixed;border-radius:50%;background:#fff;pointer-events:none;animation:tw var(--d) var(--dl) ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.12}50%{opacity:.85}}
+@keyframes glow{0%,100%{text-shadow:0 0 10px currentColor}50%{text-shadow:0 0 30px currentColor,0 0 55px currentColor}}
+@keyframes slideIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+#pinyin-btn{position:fixed;top:12px;right:12px;z-index:300;padding:5px 12px;border:1px solid rgba(0,245,255,.4);border-radius:20px;background:rgba(0,245,255,.12);color:#00f5ff;font-family:'Exo 2',sans-serif;font-size:11px;cursor:pointer}
+.screen{display:none;padding:20px 16px 52px;max-width:460px;margin:0 auto}
+.screen.active{display:block;animation:slideIn .4s ease}
+
+#title{font-family:'Orbitron',monospace;font-size:clamp(26px,6.5vw,42px);font-weight:900;color:#00f5ff;letter-spacing:4px;text-align:center;animation:glow 3s ease-in-out infinite;margin-bottom:4px}
+#sub{text-align:center;font-size:10px;color:#334d5c;letter-spacing:5px;margin-bottom:20px}
+#xp-panel{background:rgba(0,245,255,.05);border:1px solid rgba(0,245,255,.2);border-radius:16px;padding:16px 20px;text-align:center;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:12px}
+#xp-val{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:#00f5ff}
+.how-box{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px 16px;margin-bottom:22px}
+.how-row{display:flex;gap:10px;margin-bottom:9px;align-items:flex-start;font-size:12px;color:#7799aa}
+.btn-start{display:block;width:100%;padding:16px;background:rgba(0,245,255,.08);border:1.5px solid #00f5ff;border-radius:14px;color:#00f5ff;font-family:'Orbitron',monospace;font-size:15px;font-weight:900;letter-spacing:4px;cursor:pointer;text-align:center;margin-bottom:12px;box-shadow:0 0 20px rgba(0,245,255,.25)}
+.btn-codex{display:block;width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:14px;color:#44667a;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;cursor:pointer;text-align:center}
+
+#prog-bar{height:4px;background:#081520;border-radius:2px;overflow:hidden;margin-bottom:14px}
+#prog-fill{height:100%;background:linear-gradient(90deg,#00f5ff,#8844ff);transition:width .5s ease}
+#prompt-card{background:rgba(0,245,255,.05);border:1px solid rgba(0,245,255,.2);border-radius:16px;padding:16px 18px;margin-bottom:14px;text-align:center}
+#prompt-lbl{font-size:10px;color:#334d5c;letter-spacing:4px;margin-bottom:8px}
+#prompt-meaning{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(18px,5vw,28px);color:#00f5ff;letter-spacing:2px;animation:glow 2s ease-in-out infinite;text-transform:uppercase}
+#prompt-py{font-size:13px;color:#44667a;margin-top:6px}
+#peek-btn{margin-top:10px;padding:4px 12px;background:transparent;border:1px solid rgba(0,245,255,.25);border-radius:8px;color:#334d5c;font-size:10px;cursor:pointer}
+#peek-char{margin-top:8px;font-family:serif;font-size:clamp(30px,8vw,50px);color:rgba(0,245,255,.3);letter-spacing:4px;animation:pop .3s ease;display:none}
+#canvas-wrap{position:relative;margin-bottom:12px;overflow:hidden;transition:border .4s,box-shadow .4s}
+#draw-canvas{display:block;width:100%;background:#030912;touch-action:none;cursor:crosshair}
+#checking-overlay{display:none;position:absolute;inset:0;background:rgba(3,9,18,.75);flex-direction:column;align-items:center;justify-content:center;gap:10px}
+#spin-ring{width:28px;height:28px;border:3px solid #00f5ff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+.ctrl-row{display:flex;gap:8px;margin-bottom:14px}
+.ctrl-btn{flex:1;padding:10px;border-radius:10px;font-size:12px;cursor:pointer;text-align:center}
+#ai-btn{width:100%;padding:11px;border-radius:10px;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:2px;cursor:pointer;margin-bottom:14px;transition:all .2s}
+.self-grade-row{display:flex;gap:8px;margin-bottom:14px}
+.sg-btn{flex:1;padding:9px 4px;background:rgba(255,255,255,.04);border-radius:10px;font-size:11px;cursor:pointer;text-align:center}
+#feedback-card{border-radius:14px;padding:14px 16px;margin-bottom:14px;text-align:center;display:none;animation:pop .4s ease}
+#fb-emoji{font-size:28px;margin-bottom:6px}
+#fb-label{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;letter-spacing:2px;margin-bottom:6px}
+#fb-comment{font-size:13px;color:#7799aa;margin-bottom:12px}
+#fb-answer{border-radius:10px;padding:12px 16px;background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.2)}
+#fb-char{font-family:serif;font-size:clamp(28px,8vw,44px);color:#00f5ff;letter-spacing:4px;text-shadow:0 0 16px rgba(0,245,255,.5)}
+#fb-py{font-size:11px;color:#334d5c;margin-top:4px}
+#next-btn2{display:none;width:100%;padding:14px;background:rgba(0,245,255,.08);border:1px solid #00f5ff;border-radius:13px;color:#00f5ff;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:3px;cursor:pointer;text-align:center;box-shadow:0 0 14px rgba(0,245,255,.2)}
+
+/* summary */
+#sum2-title{font-family:'Orbitron',monospace;font-size:clamp(14px,3.5vw,20px);font-weight:700;letter-spacing:2px;text-align:center;margin-bottom:6px}
+#sum2-score{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(48px,12vw,76px);line-height:1;text-align:center;margin-bottom:6px}
+#sum2-sub{font-size:12px;color:#ffa500;text-align:center;margin-bottom:6px}
+#sum2-xp{font-size:13px;color:#44667a;text-align:center;margin-bottom:24px}
+#sum2-list{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:16px 14px;margin-bottom:20px}
+.s2row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.s2row:last-child{border-bottom:none}
+
+/* codex */
+.back-row{display:flex;align-items:center;gap:14px;margin-bottom:20px;cursor:pointer}
+#cx2-list{display:flex;flex-direction:column;gap:8px}
+.cx2-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:14px}
+</style>
+</head>
+<body>
+<button id="pinyin-btn" onclick="togglePinyin()">拼音 ON</button>
+
+<div id="home" class="screen active">
+  <div id="title">手写 TRACE</div>
+  <div id="sub">CHAR 4 · HANDWRITING MISSION</div>
+  <div id="xp-panel"><span style="font-size:28px">✍️</span><div><div id="xp-val">0 <span style="font-size:12px;color:#44667a">XP</span></div><div style="font-size:10px;color:#44667a;letter-spacing:2px">TOTAL EARNED</div></div></div>
+  <div class="how-box">
+    <div class="how-row"><span style="font-size:16px;flex-shrink:0">👁️</span><span>See the English meaning + pinyin</span></div>
+    <div class="how-row"><span style="font-size:16px;flex-shrink:0">✍️</span><span>Write Chinese characters with your finger</span></div>
+    <div class="how-row"><span style="font-size:16px;flex-shrink:0">🤖</span><span>AI checks your handwriting instantly</span></div>
+    <div class="how-row"><span style="font-size:16px;flex-shrink:0">⭐</span><span>Correct = +30 XP · Partial = +10 XP</span></div>
+  </div>
+  <button class="btn-start" onclick="startSession()">✍️ START MISSION</button>
+  <button class="btn-codex" onclick="showCx()">📖 VOCAB CODEX</button>
+</div>
+
+<div id="write" class="screen">
+  <div id="prog-bar"><div id="prog-fill" style="width:0%"></div></div>
+  <div id="prompt-card">
+    <div id="prompt-lbl">WRITE THE CHARACTERS FOR</div>
+    <div id="prompt-meaning"></div>
+    <div id="prompt-py"></div>
+    <button id="peek-btn" onclick="togglePeek()">👁️ Peek answer</button>
+    <div id="peek-char"></div>
+  </div>
+  <div id="canvas-wrap" style="border:2px solid rgba(255,255,255,.12);border-radius:14px">
+    <div id="box-overlay" style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;pointer-events:none;z-index:1"></div>
+    <canvas id="draw-canvas" width="1200" height="300" style="height:300px"></canvas>
+    <div id="checking-overlay" style="display:none;position:absolute;inset:0;background:rgba(3,9,18,.75);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+      <div id="spin-ring"></div>
+      <div style="font-family:'Orbitron',monospace;font-size:10px;color:#00f5ff;letter-spacing:3px">AI CHECKING...</div>
+    </div>
+  </div>
+  <div class="ctrl-row">
+    <button class="ctrl-btn" onclick="clearCanvas()" style="background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.3);color:#ff4466">🗑️ Clear</button>
+    <button class="ctrl-btn" id="erase-btn" onclick="toggleErase()" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.15);color:#6688aa">⬜ Erase</button>
+  </div>
+  <div id="eraser-slider" style="display:none;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:rgba(255,204,0,.06);border:1px solid rgba(255,204,0,.2);border-radius:10px">
+    <span>⬜</span>
+    <input type="range" min="10" max="120" value="40" id="eraser-size" style="flex:1;accent-color:#ffcc00">
+    <span id="eraser-lbl" style="font-family:'Orbitron',monospace;font-size:11px;color:#ffcc00;min-width:32px;text-align:right">40px</span>
+  </div>
+  <button id="ai-btn" onclick="checkHandwriting()" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);color:#334d5c" disabled>🤖 AI CHECK</button>
+  <div id="self-grade-row" style="display:none">
+    <div style="font-size:10px;color:#334d5c;text-align:center;margin-bottom:8px;letter-spacing:2px">OR SELF-GRADE</div>
+    <div class="self-grade-row">
+      <button class="sg-btn" onclick="selfGrade('correct')" style="border:1px solid #00ff8855;color:#00ff88">✅ Got it</button>
+      <button class="sg-btn" onclick="selfGrade('partial')" style="border:1px solid #ffcc0055;color:#ffcc00">💪 Almost</button>
+      <button class="sg-btn" onclick="selfGrade('incorrect')" style="border:1px solid #ff446655;color:#ff4466">❌ Not yet</button>
+    </div>
+  </div>
+  <div id="feedback-card">
+    <div id="fb-emoji"></div>
+    <div id="fb-label"></div>
+    <div id="fb-comment"></div>
+    <div id="fb-answer"><div style="font-size:10px;color:#334d5c;letter-spacing:3px;margin-bottom:8px">CORRECT ANSWER</div><div id="fb-char"></div><div id="fb-py"></div></div>
+  </div>
+  <button id="next-btn2" onclick="nextItem()"></button>
+</div>
+
+<div id="summary2" class="screen">
+  <div id="sum2-title"></div><div id="sum2-score"></div><div id="sum2-sub"></div><div id="sum2-xp"></div>
+  <div id="sum2-list"></div>
+  <button onclick="startSession()" style="display:block;width:100%;padding:14px;margin-bottom:10px;background:rgba(0,245,255,.08);border:1.5px solid #00f5ff;border-radius:13px;color:#00f5ff;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:3px;cursor:pointer;text-align:center;box-shadow:0 0 16px rgba(0,245,255,.2)">✍️ NEW MISSION</button>
+  <button onclick="showScreen('home')" style="display:block;width:100%;padding:11px;background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:13px;color:#44667a;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;cursor:pointer;text-align:center">← HOME BASE</button>
+</div>
+
+<div id="codex2" class="screen">
+  <div class="back-row" onclick="showScreen('home')">
+    <span style="font-size:22px;color:#44667a">←</span>
+    <span style="font-family:'Orbitron',monospace;font-size:13px;color:#00f5ff;letter-spacing:3px">REFERENCE CODEX</span>
+    <span style="margin-left:auto;font-size:11px;color:#44667a">CHAR 4</span>
+  </div>
+  <div id="cx2-list"></div>
+</div>
+
+<script>
+var VOCAB=[
+  {char:"环保袋",py:"huán bǎo dài",en:"eco / reusable bag"},
+  {char:"组屋楼下",py:"zǔ wū lóu xià",en:"downstairs of the flat"},
+  {char:"停车场",py:"tíng chē chǎng",en:"car park"},
+  {char:"几辆汽车",py:"jǐ liàng qì chē",en:"several cars"},
+  {char:"灯一直亮着",py:"dēng yī zhí liàng zhe",en:"lights kept on"},
+  {char:"所以",py:"suǒ yǐ",en:"therefore / so"},
+  {char:"一张纸",py:"yī zhāng zhǐ",en:"a piece of paper"},
+  {char:"日用品",py:"rì yòng pǐn",en:"daily necessities"},
+  {char:"认为",py:"rèn wéi",en:"to think / believe"},
+  {char:"责任感",py:"zé rèn gǎn",en:"sense of responsibility"},
+  {char:"我们一起回家吧",py:"wǒ men yī qǐ huí jiā ba",en:"let's go home together"},
+  {char:"如果我有很多钱",py:"rú guǒ wǒ yǒu hěn duō qián",en:"if I had a lot of money"},
+  {char:"我就买一辆车",py:"wǒ jiù mǎi yī liàng chē",en:"I would buy a car"},
+];
+
+var xp=0,showPinyin=true;
+var queue=[],qIdx=0,results=[];
+var drawing=false,lastX=0,lastY=0,erasing=false,hasDrawn=false,eraserSz=40;
+var peeking=false;
+
+function load(){
+  try{xp=parseInt(localStorage.getItem('hw4_xp'))||0;showPinyin=localStorage.getItem('pinyin_on')!=='false';}catch(e){}
+  document.getElementById('xp-val').innerHTML=xp+' <span style="font-size:12px;color:#44667a">XP</span>';
+  document.getElementById('pinyin-btn').textContent='拼音 '+(showPinyin?'ON':'OFF');
+  buildCx();buildStars();
+  var es=document.getElementById('eraser-size');
+  es.addEventListener('input',function(){eraserSz=parseInt(es.value);document.getElementById('eraser-lbl').textContent=eraserSz+'px';});
+}
+function save(){try{localStorage.setItem('hw4_xp',xp);}catch(e){}}
+function togglePinyin(){showPinyin=!showPinyin;document.getElementById('pinyin-btn').textContent='拼音 '+(showPinyin?'ON':'OFF');try{localStorage.setItem('pinyin_on',showPinyin);}catch(e){};buildCx();renderItem();}
+function showScreen(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById(id).classList.add('active');}
+function showCx(){buildCx();showScreen('codex2');}
+function buildStars(){for(var i=0;i<80;i++){var s=document.createElement('div');s.className='star';s.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;width:'+(Math.random()*1.6+.3)+'px;height:'+(Math.random()*1.6+.3)+'px;--d:'+(Math.random()*3+2)+'s;--dl:'+(Math.random()*6)+'s';document.body.appendChild(s);}}
+function buildCx(){var list=document.getElementById('cx2-list');list.innerHTML='';VOCAB.forEach(function(v){var card=document.createElement('div');card.className='cx2-card';card.innerHTML='<div style="font-family:serif;font-size:20px;color:#fff;min-width:90px;line-height:1.4">'+v.char+'</div><div>'+(showPinyin?'<div style="font-size:11px;color:#00cfff;margin-bottom:2px">'+v.py+'</div>':'')+'<div style="font-size:11px;color:#44667a">'+v.en+'</div></div>';list.appendChild(card);});}
+
+function shuffle(a){var arr=a.slice();for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t;}return arr;}
+
+function startSession(){queue=shuffle(VOCAB);qIdx=0;results=[];showScreen('write');renderItem();}
+
+function renderItem(){
+  var item=queue[qIdx];
+  document.getElementById('prog-fill').style.width=(qIdx/queue.length*100)+'%';
+  document.getElementById('prompt-meaning').textContent=item.en.toUpperCase();
+  document.getElementById('prompt-py').textContent=showPinyin?item.py:'';
+  peeking=false;document.getElementById('peek-char').style.display='none';document.getElementById('peek-btn').textContent='👁️ Peek answer';
+  clearCanvas();hasDrawn=false;erasing=false;
+  document.getElementById('erase-btn').style.background='rgba(255,255,255,.04)';document.getElementById('erase-btn').style.color='#6688aa';document.getElementById('erase-btn').style.borderColor='rgba(255,255,255,.15)';
+  document.getElementById('eraser-slider').style.display='none';
+  document.getElementById('ai-btn').disabled=true;document.getElementById('ai-btn').style.background='rgba(255,255,255,.03)';document.getElementById('ai-btn').style.borderColor='rgba(255,255,255,.1)';document.getElementById('ai-btn').style.color='#334d5c';
+  document.getElementById('self-grade-row').style.display='none';
+  document.getElementById('feedback-card').style.display='none';
+  document.getElementById('next-btn2').style.display='none';
+  document.getElementById('canvas-wrap').style.borderColor='rgba(255,255,255,.12)';document.getElementById('canvas-wrap').style.boxShadow='none';
+  // box overlay
+  var n=item.char.length;var overlay=document.getElementById('box-overlay');overlay.innerHTML='';
+  for(var i=0;i<n;i++){var d=document.createElement('div');d.style.cssText='flex:1;border-right:'+(i<n-1?'1px dashed rgba(0,245,255,.1)':'none')+';display:flex;align-items:flex-start;justify-content:center;padding-top:6px';d.innerHTML='<span style="font-size:9px;color:rgba(0,245,255,.15)">'+(i+1)+'</span>';overlay.appendChild(d);}
+}
+
+function togglePeek(){peeking=!peeking;var item=queue[qIdx];document.getElementById('peek-char').textContent=peeking?item.char:'';document.getElementById('peek-char').style.display=peeking?'block':'none';document.getElementById('peek-btn').textContent=peeking?'🙈 Hide answer':'👁️ Peek answer';}
+function toggleErase(){erasing=!erasing;document.getElementById('erase-btn').textContent=erasing?'✏️ Draw':'⬜ Erase';document.getElementById('erase-btn').style.background=erasing?'rgba(255,204,0,.18)':'rgba(255,255,255,.04)';document.getElementById('erase-btn').style.color=erasing?'#ffcc00':'#6688aa';document.getElementById('erase-btn').style.borderColor=erasing?'#ffcc00':'rgba(255,255,255,.15)';document.getElementById('eraser-slider').style.display=erasing?'flex':'none';}
+
+// canvas
+var cv=document.getElementById('draw-canvas');var ctx=cv.getContext('2d');
+function getPos(e){var r=cv.getBoundingClientRect();var src=e.touches?e.touches[0]:e;return{x:(src.clientX-r.left)*(cv.width/r.width),y:(src.clientY-r.top)*(cv.height/r.height)};}
+function clearCanvas(){ctx.clearRect(0,0,cv.width,cv.height);drawGrid();hasDrawn=false;document.getElementById('ai-btn').disabled=true;document.getElementById('ai-btn').style.background='rgba(255,255,255,.03)';document.getElementById('ai-btn').style.borderColor='rgba(255,255,255,.1)';document.getElementById('ai-btn').style.color='#334d5c';document.getElementById('self-grade-row').style.display='none';}
+function drawGrid(){if(!queue[qIdx])return;var n=queue[qIdx].char.length;var cw=cv.width/n;ctx.strokeStyle='rgba(0,245,255,.08)';ctx.lineWidth=1;for(var i=1;i<n;i++){ctx.beginPath();ctx.moveTo(i*cw,0);ctx.lineTo(i*cw,cv.height);ctx.stroke();}for(var i=0;i<n;i++){ctx.beginPath();ctx.moveTo(i*cw,0);ctx.lineTo((i+1)*cw,cv.height);ctx.stroke();ctx.beginPath();ctx.moveTo((i+1)*cw,0);ctx.lineTo(i*cw,cv.height);ctx.stroke();ctx.beginPath();ctx.moveTo(i*cw,cv.height/2);ctx.lineTo((i+1)*cw,cv.height/2);ctx.stroke();ctx.beginPath();ctx.moveTo(i*cw+cw/2,0);ctx.lineTo(i*cw+cw/2,cv.height);ctx.stroke();}}
+
+function startDraw(e){e.preventDefault();drawing=true;var p=getPos(e);lastX=p.x;lastY=p.y;if(!erasing){hasDrawn=true;document.getElementById('ai-btn').disabled=false;document.getElementById('ai-btn').style.background='rgba(0,245,255,.1)';document.getElementById('ai-btn').style.borderColor='#00f5ff';document.getElementById('ai-btn').style.color='#00f5ff';document.getElementById('self-grade-row').style.display='block';}}
+function moveDraw(e){e.preventDefault();if(!drawing)return;var p=getPos(e);if(erasing){ctx.clearRect(p.x-eraserSz/2,p.y-eraserSz/2,eraserSz,eraserSz);}else{ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();}lastX=p.x;lastY=p.y;}
+function endDraw(e){e.preventDefault();drawing=false;}
+cv.addEventListener('mousedown',startDraw);cv.addEventListener('mousemove',moveDraw);cv.addEventListener('mouseup',endDraw);cv.addEventListener('mouseleave',endDraw);
+cv.addEventListener('touchstart',startDraw,{passive:false});cv.addEventListener('touchmove',moveDraw,{passive:false});cv.addEventListener('touchend',endDraw,{passive:false});
+
+function buildPrompt(item){return 'A 9-year-old child attempted to write the Chinese phrase '+JSON.stringify(item.char)+' (pinyin: '+item.py+') across '+item.char.length+' boxes on a dark canvas. Be the most generous marker possible. Mark a box correct if ANY strokes exist in it. Only mark incorrect if completely empty. Overall: correct = all boxes have strokes, partial = most boxes have strokes, incorrect = canvas basically empty. Default to correct. Reply ONLY with valid JSON: {"grade":"correct","chars":["correct","correct"],"comment":"Warm praise max 8 words."}';}
+
+async function checkHandwriting(){
+  var overlay=document.getElementById('checking-overlay');
+  overlay.style.display='flex';
+  try{
+    var b64=cv.toDataURL('image/png').split(',')[1];
+    var item=queue[qIdx];
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/png',data:b64}},{type:'text',text:buildPrompt(item)}]}]})});
+    var data=await resp.json();
+    var raw=(data.content||[]).find(function(b){return b.type==='text';});
+    var parsed=JSON.parse((raw?raw.text:'{}').replace(/```json/g,'').replace(/```/g,'').trim());
+    showFeedback(parsed.grade||'incorrect',parsed.comment||'Keep going!',Array.isArray(parsed.chars)?parsed.chars:[]);
+  }catch(e){showFeedback('error','Could not check — use self-grade.',[]);}
+  overlay.style.display='none';
+}
+
+function selfGrade(g){var c={correct:'Great job! You wrote it correctly!',partial:'Good effort — keep practising!',incorrect:'Keep going — check the codex!'};showFeedback(g,c[g],[]);}
+
+function showFeedback(grade,comment,charGrades){
+  var GC={correct:'#00ff88',partial:'#ffcc00',incorrect:'#ff4466',error:'#ff9900'};
+  var GE={correct:'⭐',partial:'💪',incorrect:'❌',error:'⚠️'};
+  var GL={correct:'CORRECT! +30 XP',partial:'PARTIAL! +10 XP',incorrect:'KEEP PRACTISING',error:'CHECK BELOW'};
+  var col=GC[grade]||'#ff9900';
+  if(grade==='correct')xp+=30;else if(grade==='partial')xp+=10;
+  save();document.getElementById('xp-val').innerHTML=xp+' <span style="font-size:12px;color:#44667a">XP</span>';
+  document.getElementById('canvas-wrap').style.borderColor=col;document.getElementById('canvas-wrap').style.boxShadow='0 0 20px '+col+'33';
+  // update box overlay
+  var item=queue[qIdx];var n=item.char.length;var overlay=document.getElementById('box-overlay');overlay.innerHTML='';
+  for(var i=0;i<n;i++){var cg=charGrades[i];var d=document.createElement('div');d.style.cssText='flex:1;border-right:'+(i<n-1?(cg==='incorrect'?'3px solid rgba(255,68,102,.85)':cg==='correct'?'3px solid rgba(0,255,136,.6)':'1px dashed rgba(0,245,255,.1)'):'none')+';background:'+(cg==='incorrect'?'rgba(255,68,102,.08)':cg==='correct'?'rgba(0,255,136,.06)':'transparent')+';display:flex;align-items:flex-start;justify-content:center;padding-top:6px;transition:all .4s';d.innerHTML='<span style="font-size:9px;color:'+(cg==='incorrect'?'rgba(255,68,102,.6)':cg==='correct'?'rgba(0,255,136,.5)':'rgba(0,245,255,.15)')+'">0</span>';overlay.appendChild(d);}
+  var fc=document.getElementById('feedback-card');fc.style.display='block';fc.style.background='rgba(255,255,255,.04)';fc.style.border='1px solid '+col+'55';
+  document.getElementById('fb-emoji').textContent=GE[grade]||'⚠️';
+  document.getElementById('fb-label').textContent=GL[grade]||'SEE BELOW';document.getElementById('fb-label').style.color=col;
+  document.getElementById('fb-comment').textContent=comment;
+  document.getElementById('fb-char').textContent=item.char;document.getElementById('fb-char').style.color=col;document.getElementById('fb-char').style.textShadow='0 0 16px '+col+'66';
+  document.getElementById('fb-py').textContent=showPinyin?item.py+' · '+item.en:'';
+  var nb=document.getElementById('next-btn2');nb.style.display='block';nb.textContent=qIdx+1<queue.length?'NEXT CHARACTER →':'FINISH MISSION ✓';
+  document.getElementById('ai-btn').disabled=true;
+  results.push({item:item,grade:grade});
+}
+
+function nextItem(){
+  if(qIdx+1<queue.length){qIdx++;renderItem();}else showSummary2();
+}
+
+function showSummary2(){
+  var correct=results.filter(function(r){return r.grade==='correct';}).length;
+  var partial=results.filter(function(r){return r.grade==='partial';}).length;
+  var total=results.length;
+  var pct=Math.round((correct+partial*.5)/total*100);
+  var h=[{min:90,text:'FLAWLESS WRITER! 🏆',col:'#ffd700'},{min:70,text:'EXCELLENT! 🌟',col:'#00ff88'},{min:50,text:'GOOD EFFORT! 💪',col:'#ffa500'},{min:0,text:'KEEP TRAINING! ✊',col:'#ff9900'}].find(function(x){return pct>=x.min;});
+  document.getElementById('sum2-title').textContent=h.text;document.getElementById('sum2-title').style.color=h.col;document.getElementById('sum2-title').style.textShadow='0 0 20px '+h.col;
+  document.getElementById('sum2-score').innerHTML=correct+'<span style="font-size:40%;color:#44667a">/'+total+'</span>';document.getElementById('sum2-score').style.color=h.col;document.getElementById('sum2-score').style.textShadow='0 0 28px '+h.col;
+  document.getElementById('sum2-sub').textContent='correct · '+partial+' partial';
+  document.getElementById('sum2-xp').textContent='⚡ '+xp+' XP total';
+  var list=document.getElementById('sum2-list');list.innerHTML='<div style="font-family:Orbitron,monospace;font-size:9px;color:#44667a;letter-spacing:3px;margin-bottom:12px">MISSION REVIEW</div>';
+  var GC={correct:'#00ff88',partial:'#ffcc00',incorrect:'#ff4466',skipped:'#44667a'};
+  var GE={correct:'✅',partial:'💪',incorrect:'❌'};
+  results.forEach(function(r,i){var row=document.createElement('div');row.className='s2row';row.style.borderBottom=i<results.length-1?'1px solid rgba(255,255,255,.05)':'none';var gc=GC[r.grade]||'#44667a';var ge=GE[r.grade]||'⏭';var xpE=r.grade==='correct'?'+30':r.grade==='partial'?'+10':'0';row.innerHTML='<span>'+ge+'</span><div style="flex:1"><div style="font-family:serif;font-size:22px;color:#fff">'+r.item.char+'</div><div style="font-size:10px;color:#44667a">'+r.item.en+'</div></div><div style="font-family:Orbitron,monospace;font-size:11px;color:'+gc+';font-weight:700">'+xpE+'</div>';list.appendChild(row);});
+  showScreen('summary2');
+}
+
+load();
+</script>
+</body>
+</html>

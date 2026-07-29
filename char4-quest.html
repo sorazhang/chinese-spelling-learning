@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="dark"/>
+<title>汉字 QUEST – Char 4</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Exo+2:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:radial-gradient(ellipse at 25% 15%,#0b1d30,#050912 50%,#020408);color:#fff;font-family:'Exo 2',sans-serif;overflow-x:hidden}
+.star{position:fixed;border-radius:50%;background:#fff;pointer-events:none;animation:tw var(--d) var(--dl) ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.1}50%{opacity:.8}}
+@keyframes glow{0%,100%{text-shadow:0 0 10px currentColor}50%{text-shadow:0 0 28px currentColor,0 0 52px currentColor}}
+@keyframes slideIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%{transform:scale(.7);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-70px)}}
+
+/* ── pinyin toggle ── */
+#pinyin-btn{position:fixed;top:12px;right:12px;z-index:300;padding:5px 12px;border:1px solid rgba(0,245,255,.4);border-radius:20px;background:rgba(0,245,255,.12);color:#00f5ff;font-family:'Exo 2',sans-serif;font-size:11px;cursor:pointer}
+
+/* ── screens ── */
+.screen{display:none;padding:22px 18px 48px;max-width:460px;margin:0 auto}
+.screen.active{display:block;animation:slideIn .4s ease}
+
+/* ── home ── */
+#title{font-family:'Orbitron',monospace;font-size:clamp(26px,7vw,40px);font-weight:900;color:#00f5ff;letter-spacing:4px;text-align:center;animation:glow 3s ease-in-out infinite;margin-bottom:4px}
+#sub{text-align:center;font-size:10px;color:#334d5c;letter-spacing:5px;margin-bottom:22px}
+#xp-panel{background:rgba(0,245,255,.05);border:1px solid rgba(0,245,255,.2);border-radius:16px;padding:16px 20px;text-align:center;margin-bottom:20px}
+#xp-val{font-family:'Orbitron',monospace;font-size:22px;font-weight:700;color:#00f5ff}
+.stat-row{display:flex;gap:10px;margin-bottom:20px}
+.stat{flex:1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 6px;text-align:center}
+.stat-icon{font-size:20px;margin-bottom:4px}
+.stat-num{font-family:'Orbitron',monospace;font-size:18px;font-weight:700}
+.stat-lbl{font-size:9px;color:#44667a;letter-spacing:2px;margin-top:2px}
+.btn-primary{display:block;width:100%;padding:15px;background:rgba(0,245,255,.08);border:1.5px solid #00f5ff;border-radius:14px;color:#00f5ff;font-family:'Orbitron',monospace;font-size:14px;font-weight:700;letter-spacing:4px;cursor:pointer;margin-bottom:12px;text-align:center}
+.btn-secondary{display:block;width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,.12);border-radius:14px;color:#44667a;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;cursor:pointer;text-align:center}
+
+/* ── quiz ── */
+#progress-bar{height:4px;background:#081520;border-radius:2px;overflow:hidden;margin-bottom:18px}
+#progress-fill{height:100%;background:linear-gradient(90deg,#00f5ff,#8844ff);transition:width .5s ease}
+#dots{display:flex;gap:8px;justify-content:center;margin-bottom:18px}
+.dot{width:9px;height:9px;border-radius:50%;background:#0d1f30;transition:all .3s}
+.dot.active{background:#00f5ff;box-shadow:0 0 8px #00f5ff;transform:scale(1.3)}
+.dot.correct{background:#00ff88}
+.dot.wrong{background:#ff4466}
+#prompt-card{background:rgba(0,245,255,.04);border:1px solid rgba(0,245,255,.18);border-radius:20px;padding:28px 20px;text-align:center;margin-bottom:20px}
+#prompt-label{font-size:10px;color:#44667a;letter-spacing:4px;margin-bottom:14px}
+#prompt-text{font-size:clamp(36px,9vw,72px);color:#fff;line-height:1.2;font-family:serif}
+#prompt-text.meaning{font-family:'Exo 2',sans-serif;font-size:clamp(16px,4.5vw,24px);font-weight:700}
+#prompt-pinyin{font-size:12px;color:#44667a;margin-top:10px;min-height:18px}
+#options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.opt{padding:16px 8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:14px;color:#cce0ee;font-size:14px;cursor:pointer;text-align:center;line-height:1.3;font-family:serif;transition:all .2s}
+.opt.meaning-opt{font-family:'Exo 2',sans-serif;font-size:11px;font-weight:600}
+.opt:active{transform:scale(.95)}
+.opt.correct{border-color:#00ff88!important;background:rgba(0,255,136,.1)!important;color:#00ff88!important;animation:pop .4s ease}
+.opt.wrong{border-color:#ff4466!important;background:rgba(255,68,102,.1)!important;color:#ff4466!important;animation:shake .35s ease}
+.opt.dim{opacity:.45;pointer-events:none}
+#feedback-text{text-align:center;font-size:13px;font-weight:600;min-height:22px;transition:all .3s}
+
+/* ── result ── */
+#result-title{font-family:'Orbitron',monospace;font-size:clamp(15px,4vw,22px);font-weight:700;letter-spacing:2px;text-align:center;margin-bottom:4px}
+#result-score{font-family:'Orbitron',monospace;font-size:clamp(56px,14vw,84px);font-weight:900;line-height:1;text-align:center;margin-bottom:4px}
+#result-xp{font-size:13px;color:#00f5ff;text-align:center;margin-bottom:22px}
+#result-list{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:16px 14px;margin-bottom:16px}
+.rl-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.rl-row:last-child{border-bottom:none}
+.rl-icon{font-size:15px;width:20px}
+.rl-char{font-family:serif;font-size:22px;color:#fff;min-width:80px}
+.rl-info{font-size:10px;color:#44667a}
+
+/* ── codex ── */
+#codex-list{display:flex;flex-direction:column;gap:8px}
+.cx-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:14px}
+.cx-char{font-family:serif;font-size:22px;color:#fff;min-width:90px;line-height:1.4}
+.cx-py{font-size:11px;color:#00cfff;margin-bottom:2px}
+.cx-en{font-size:11px;color:#44667a}
+.back-btn{display:flex;align-items:center;gap:10px;margin-bottom:18px;cursor:pointer;color:#44667a}
+.back-arrow{font-size:22px}
+.back-label{font-family:'Orbitron',monospace;font-size:13px;letter-spacing:3px}
+
+/* ── star floater ── */
+.floater{position:fixed;font-size:24px;pointer-events:none;animation:floatUp 1.1s ease-out forwards}
+</style>
+</head>
+<body>
+
+<button id="pinyin-btn" onclick="togglePinyin()">拼音 ON</button>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div id="title">汉字 QUEST</div>
+  <div id="sub">CHAR 4 · 词汇练习</div>
+  <div id="xp-panel">
+    <div style="font-size:10px;color:#44667a;letter-spacing:4px;margin-bottom:6px">TOTAL XP</div>
+    <div id="xp-val">0 <span style="font-size:13px;color:#44667a">XP</span></div>
+  </div>
+  <div class="stat-row">
+    <div class="stat"><div class="stat-icon">🔥</div><div class="stat-num" id="st-streak">0</div><div class="stat-lbl">STREAK</div></div>
+    <div class="stat"><div class="stat-icon">✅</div><div class="stat-num" id="st-correct">0</div><div class="stat-lbl">CORRECT</div></div>
+    <div class="stat"><div class="stat-icon">📖</div><div class="stat-num">10</div><div class="stat-lbl">VOCAB</div></div>
+  </div>
+  <button class="btn-primary" onclick="startQuiz()">▶ LAUNCH MISSION</button>
+  <button class="btn-secondary" onclick="showCodex()">📖 VOCAB CODEX</button>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="screen">
+  <div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+  <div id="dots"></div>
+  <div id="prompt-card">
+    <div id="prompt-label"></div>
+    <div id="prompt-text"></div>
+    <div id="prompt-pinyin"></div>
+  </div>
+  <div id="options"></div>
+  <div id="feedback-text"></div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+  <div id="result-title"></div>
+  <div id="result-score"></div>
+  <div id="result-xp"></div>
+  <div id="result-list"></div>
+  <button class="btn-primary" onclick="startQuiz()">▶ NEW MISSION</button>
+  <button class="btn-secondary" onclick="showScreen('home')">← HOME BASE</button>
+</div>
+
+<!-- CODEX -->
+<div id="codex" class="screen">
+  <div class="back-btn" onclick="showScreen('home')">
+    <span class="back-arrow">←</span>
+    <span class="back-label" style="color:#00f5ff">VOCAB CODEX</span>
+    <span style="margin-left:auto;font-size:11px;color:#44667a">CHAR 4</span>
+  </div>
+  <div id="codex-list"></div>
+</div>
+
+<script>
+var VOCAB = [
+  {char:"环保袋",    py:"huán bǎo dài",          en:"eco / reusable bag"},
+  {char:"组屋楼下",  py:"zǔ wū lóu xià",          en:"downstairs of the flat"},
+  {char:"停车场",    py:"tíng chē chǎng",          en:"car park"},
+  {char:"几辆汽车",  py:"jǐ liàng qì chē",         en:"several cars"},
+  {char:"灯一直亮着",py:"dēng yī zhí liàng zhe",   en:"lights kept on"},
+  {char:"所以",      py:"suǒ yǐ",                  en:"therefore / so"},
+  {char:"一张纸",    py:"yī zhāng zhǐ",            en:"a piece of paper"},
+  {char:"日用品",    py:"rì yòng pǐn",             en:"daily necessities"},
+  {char:"认为",      py:"rèn wéi",                 en:"to think / believe"},
+  {char:"责任感",    py:"zé rèn gǎn",              en:"sense of responsibility"},
+];
+
+var xp = 0, streak = 0, totalCorrect = 0;
+var showPinyin = true;
+var quiz = [], qIdx = 0, answers = [];
+var busy = false;
+
+// ── storage ──────────────────────────────────────────────────────────────────
+function load() {
+  try {
+    xp = parseInt(localStorage.getItem('cq4_xp')) || 0;
+    streak = parseInt(localStorage.getItem('cq4_streak')) || 0;
+    totalCorrect = parseInt(localStorage.getItem('cq4_correct')) || 0;
+    showPinyin = localStorage.getItem('pinyin_on') !== 'false';
+  } catch(e) {}
+  document.getElementById('xp-val').innerHTML = xp + ' <span style="font-size:13px;color:#44667a">XP</span>';
+  document.getElementById('st-streak').textContent = streak;
+  document.getElementById('st-correct').textContent = totalCorrect;
+  document.getElementById('pinyin-btn').textContent = '拼音 ' + (showPinyin ? 'ON' : 'OFF');
+  buildCodex();
+  buildStars();
+}
+function save() {
+  try {
+    localStorage.setItem('cq4_xp', xp);
+    localStorage.setItem('cq4_streak', streak);
+    localStorage.setItem('cq4_correct', totalCorrect);
+  } catch(e) {}
+}
+
+// ── stars ─────────────────────────────────────────────────────────────────────
+function buildStars() {
+  for (var i = 0; i < 80; i++) {
+    var s = document.createElement('div');
+    s.className = 'star';
+    s.style.cssText = 'left:' + Math.random()*100 + '%;top:' + Math.random()*100 + '%;width:' + (Math.random()*1.6+.3) + 'px;height:' + (Math.random()*1.6+.3) + 'px;--d:' + (Math.random()*3+2) + 's;--dl:' + (Math.random()*6) + 's';
+    document.body.appendChild(s);
+  }
+}
+
+// ── pinyin toggle ─────────────────────────────────────────────────────────────
+function togglePinyin() {
+  showPinyin = !showPinyin;
+  document.getElementById('pinyin-btn').textContent = '拼音 ' + (showPinyin ? 'ON' : 'OFF');
+  try { localStorage.setItem('pinyin_on', showPinyin); } catch(e) {}
+  buildCodex();
+}
+
+// ── screens ───────────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+function showCodex() { buildCodex(); showScreen('codex'); }
+
+function buildCodex() {
+  var list = document.getElementById('codex-list');
+  list.innerHTML = '';
+  VOCAB.forEach(function(v) {
+    var card = document.createElement('div');
+    card.className = 'cx-card';
+    card.innerHTML = '<div class="cx-char">' + v.char + '</div><div>' +
+      (showPinyin ? '<div class="cx-py">' + v.py + '</div>' : '') +
+      '<div class="cx-en">' + v.en + '</div></div>';
+    list.appendChild(card);
+  });
+}
+
+// ── quiz ──────────────────────────────────────────────────────────────────────
+function shuffle(a) {
+  var arr = a.slice();
+  for (var i = arr.length-1; i > 0; i--) {
+    var j = Math.floor(Math.random()*(i+1));
+    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+
+function generateQuiz(n) {
+  return shuffle(VOCAB).slice(0,n).map(function(target) {
+    var mode = Math.random() > .5 ? 'decode' : 'encode';
+    var wrongs = shuffle(VOCAB.filter(function(v){ return v.char !== target.char; })).slice(0,3);
+    var opts;
+    if (mode === 'decode') {
+      opts = shuffle([{text:target.en,correct:true}].concat(wrongs.map(function(w){return{text:w.en,correct:false};})));
+      return {target:target, mode:mode, prompt:target.char, label:'WHAT DOES THIS MEAN?', opts:opts};
+    } else {
+      opts = shuffle([{text:target.char,py:target.py,correct:true}].concat(wrongs.map(function(w){return{text:w.char,py:w.py,correct:false};})));
+      return {target:target, mode:mode, prompt:target.en, label:'WHICH PHRASE MEANS...', opts:opts};
+    }
+  });
+}
+
+function startQuiz() {
+  quiz = generateQuiz(5);
+  qIdx = 0;
+  answers = [];
+  busy = false;
+  showScreen('quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  var q = quiz[qIdx];
+  // progress
+  document.getElementById('progress-fill').style.width = (qIdx/quiz.length*100) + '%';
+  // dots
+  var dots = document.getElementById('dots');
+  dots.innerHTML = '';
+  for (var i = 0; i < quiz.length; i++) {
+    var d = document.createElement('div');
+    d.className = 'dot' + (i < answers.length ? (answers[i] ? ' correct' : ' wrong') : (i===qIdx ? ' active' : ''));
+    dots.appendChild(d);
+  }
+  // prompt
+  document.getElementById('prompt-label').textContent = q.label;
+  var pt = document.getElementById('prompt-text');
+  pt.textContent = q.prompt;
+  pt.className = q.mode === 'encode' ? 'meaning' : '';
+  document.getElementById('prompt-pinyin').textContent = '';
+  // options
+  var oc = document.getElementById('options');
+  oc.innerHTML = '';
+  q.opts.forEach(function(opt, i) {
+    var btn = document.createElement('div');
+    btn.className = 'opt' + (q.mode === 'decode' ? ' meaning-opt' : '');
+    btn.innerHTML = opt.text + (showPinyin && opt.py ? '<br><span style="font-size:8px;color:#44667a">' + opt.py + '</span>' : '');
+    btn.onclick = function() { selectOpt(i); };
+    oc.appendChild(btn);
+  });
+  document.getElementById('feedback-text').textContent = '';
+  document.getElementById('feedback-text').style.color = '';
+}
+
+function selectOpt(i) {
+  if (busy) return;
+  busy = true;
+  var q = quiz[qIdx];
+  var correct = q.opts[i].correct;
+  var opts = document.getElementById('options').children;
+  // style options
+  for (var j = 0; j < opts.length; j++) {
+    if (q.opts[j].correct) opts[j].classList.add('correct');
+    else if (j === i) opts[j].classList.add('wrong');
+    else opts[j].classList.add('dim');
+  }
+  // pinyin reveal
+  if (showPinyin) document.getElementById('prompt-pinyin').textContent = q.target.py;
+  // feedback
+  var fb = document.getElementById('feedback-text');
+  if (correct) {
+    fb.textContent = '⭐ CORRECT! +20 XP';
+    fb.style.color = '#00ff88';
+    spawnStar();
+  } else {
+    fb.textContent = '❌  ' + q.target.char + ' = ' + q.target.en;
+    fb.style.color = '#ff4466';
+  }
+  answers.push(correct);
+  setTimeout(function() {
+    if (qIdx + 1 >= quiz.length) {
+      finishQuiz();
+    } else {
+      qIdx++;
+      busy = false;
+      renderQuestion();
+    }
+  }, 1400);
+}
+
+function finishQuiz() {
+  var score = answers.filter(function(a){return a;}).length;
+  var perfect = score === quiz.length;
+  var earned = score * 20 + (perfect ? 50 : 0);
+  xp += earned;
+  totalCorrect += score;
+  streak = score >= 4 ? streak + 1 : (score === 0 ? 0 : streak);
+  save();
+  // update home
+  document.getElementById('xp-val').innerHTML = xp + ' <span style="font-size:13px;color:#44667a">XP</span>';
+  document.getElementById('st-streak').textContent = streak;
+  document.getElementById('st-correct').textContent = totalCorrect;
+  // result
+  var colors = score===5?'#ffd700':score>=4?'#00ff88':score>=3?'#00f5ff':score>=2?'#ff9900':'#ff4466';
+  var texts  = score===5?'PERFECT MISSION!':score>=4?'EXCELLENT!':score>=3?'MISSION COMPLETE':score>=2?'KEEP TRAINING':'RETRY MISSION';
+  document.getElementById('result-title').textContent = texts;
+  document.getElementById('result-title').style.color = colors;
+  document.getElementById('result-score').innerHTML = score + '<span style="font-size:40%;color:#44667a">/' + quiz.length + '</span>';
+  document.getElementById('result-score').style.color = colors;
+  document.getElementById('result-score').style.textShadow = '0 0 30px ' + colors;
+  document.getElementById('result-xp').textContent = '+' + earned + ' XP' + (perfect ? '  · PERFECT BONUS +50 🎉' : '');
+  // list
+  var list = document.getElementById('result-list');
+  list.innerHTML = '';
+  quiz.forEach(function(q,i) {
+    var row = document.createElement('div');
+    row.className = 'rl-row';
+    row.innerHTML = '<span class="rl-icon">' + (answers[i] ? '✅' : '❌') + '</span>' +
+      '<span class="rl-char">' + q.target.char + '</span>' +
+      '<span class="rl-info">' + (showPinyin ? q.target.py + '<br>' : '') + q.target.en + '</span>';
+    list.appendChild(row);
+  });
+  showScreen('result');
+}
+
+function spawnStar() {
+  var f = document.createElement('div');
+  f.className = 'floater';
+  f.textContent = ['⭐','✨','💫','🌟'][Math.floor(Math.random()*4)];
+  f.style.left = (30 + Math.random()*40) + '%';
+  f.style.top = '40%';
+  document.body.appendChild(f);
+  setTimeout(function(){ f.remove(); }, 1200);
+}
+
+load();
+</script>
+</body>
+</html>

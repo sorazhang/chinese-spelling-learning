@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="dark"/>
+<title>段落 RECALL – Char 4</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Exo+2:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:radial-gradient(ellipse at 20% 15%,#0c1e32,#050b14 50%,#020508);color:#fff;font-family:'Exo 2',sans-serif;overflow-x:hidden}
+.star{position:fixed;border-radius:50%;background:#fff;pointer-events:none;animation:tw var(--d) var(--dl) ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.12}50%{opacity:.85}}
+@keyframes glow{0%,100%{text-shadow:0 0 10px currentColor}50%{text-shadow:0 0 30px currentColor,0 0 55px currentColor}}
+@keyframes slideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+
+#pinyin-btn{position:fixed;top:12px;right:12px;z-index:300;padding:5px 12px;border:1px solid rgba(136,68,255,.4);border-radius:20px;background:rgba(136,68,255,.12);color:#8844ff;font-family:'Exo 2',sans-serif;font-size:11px;cursor:pointer}
+.screen{display:none;padding:22px 16px 52px;max-width:460px;margin:0 auto}
+.screen.active{display:block;animation:slideIn .4s ease}
+#title{font-family:'Orbitron',monospace;font-size:clamp(22px,5.5vw,36px);font-weight:900;color:#00f5ff;letter-spacing:4px;text-align:center;animation:glow 3s ease-in-out infinite;margin-bottom:4px}
+#sub{text-align:center;font-size:10px;color:#334d5c;letter-spacing:5px;margin-bottom:20px}
+#xp-lbl{text-align:center;font-size:13px;color:#00f5ff;margin-bottom:18px}
+.para-box{background:rgba(0,245,255,.04);border:1px solid rgba(0,245,255,.18);border-radius:18px;padding:16px;margin-bottom:16px}
+.para-hdr{display:flex;justify-content:space-between;font-size:9px;color:#334d5c;letter-spacing:3px;margin-bottom:10px}
+.para-text{font-family:serif;font-size:14px;color:#b8d4e8;line-height:2.2;letter-spacing:.5px}
+.mode-btn{display:block;width:100%;margin-bottom:10px;text-align:left;padding:16px 18px;border-radius:16px;cursor:pointer;border:none;transition:all .2s}
+.mode-hdr{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.mode-badge{margin-left:auto;font-family:'Exo 2',sans-serif;font-size:9px;letter-spacing:2px;border-radius:4px;padding:2px 6px}
+.mode-desc{font-family:'Exo 2',sans-serif;font-size:12px;color:#5577aa;margin-left:32px}
+.mode-xp{font-family:'Exo 2',sans-serif;font-size:10px;color:#334d5c;margin-left:32px;margin-top:4px}
+
+/* study */
+.back-row{display:flex;align-items:center;gap:10px;margin-bottom:18px;cursor:pointer}
+.all-chars{background:rgba(136,68,255,.05);border:1px solid rgba(136,68,255,.2);border-radius:16px;padding:16px;margin-bottom:18px}
+.all-chars-lbl{font-size:9px;color:#334d5c;letter-spacing:3px;margin-bottom:10px}
+.char-inline{display:inline-block;text-align:center;margin:2px}
+.char-inline .py{font-size:8px;height:12px;line-height:12px}
+.char-inline .ch{font-family:serif;font-size:17px;line-height:1.2;transition:color .2s}
+.focus-box{background:rgba(136,68,255,.08);border:1px solid rgba(136,68,255,.3);border-radius:16px;padding:18px 16px;margin-bottom:16px}
+.focus-hdr{display:flex;justify-content:space-between;margin-bottom:14px}
+.nav-btn{background:transparent;border:1px solid rgba(136,68,255,.3);border-radius:6px;color:#8844ff;width:26px;height:26px;cursor:pointer;font-size:12px}
+.focus-chars{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.fc{text-align:center}
+.fc-py{font-size:10px;color:#8844ff;margin-bottom:3px}
+.fc-ch{font-family:serif;font-size:clamp(26px,7vw,38px);color:#fff;animation:pop .3s ease}
+.focus-en{font-size:12px;color:#44667a;font-style:italic;border-top:1px solid rgba(136,68,255,.15);padding-top:10px}
+.read-btn{display:block;width:100%;padding:13px;background:rgba(136,68,255,.1);border:1px solid #8844ff;border-radius:12px;color:#8844ff;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:3px;cursor:pointer;text-align:center}
+
+/* drill */
+#progress-bar{height:4px;background:#081520;border-radius:2px;overflow:hidden;margin-bottom:16px}
+#progress-fill{height:100%;transition:width .5s ease}
+#phrase-dots{display:flex;gap:4px;margin-bottom:16px;justify-content:center;flex-wrap:wrap}
+.pdot{width:8px;height:8px;border-radius:50%;background:#0d2030;transition:all .3s}
+.pdot.done{background:#00cfff}
+.pdot.active{background:#fff;transform:scale(1.3)}
+.pdot.done-r{background:#00ff88}
+#hint-box{border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;transition:all .3s}
+#placed-area{border-radius:16px;padding:14px 12px;margin-bottom:14px;min-height:72px}
+#placed-lbl{font-size:9px;color:#334d5c;letter-spacing:3px;margin-bottom:10px}
+#placed-tiles{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.place-slot{width:38px;height:50px;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .25px}
+.place-slot .s-py{font-size:7px;margin-bottom:1px}
+.place-slot .s-ch{font-family:serif;font-size:20px}
+#undo-btn{width:32px;height:32px;border-radius:8px;background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.3);color:#ff4466;font-size:14px;cursor:pointer;margin-left:4px}
+#bank-area{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px 10px}
+#bank-lbl{font-size:9px;color:#334d5c;letter-spacing:3px;margin-bottom:10px}
+#bank-tiles{display:flex;flex-wrap:wrap;gap:6px}
+.bank-tile{width:44px;height:54px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.11);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .15s;touch-action:manipulation}
+.bank-tile:active{filter:brightness(1.6);transform:scale(.9)}
+.bank-tile .t-py{font-size:7px;color:#334d5c;margin-bottom:2px}
+.bank-tile .t-ch{font-family:serif;font-size:24px;color:#c8dcea}
+.bank-tile.shaking{animation:shake .35s ease}
+.bank-tile.correct-tile{border-color:#00ff88;background:rgba(0,255,136,.1);color:#00ff88}
+.bank-tile.wrong-tile{border-color:#ff4466;background:rgba(255,68,102,.1);color:#ff4466}
+#drill-feedback{text-align:center;margin:10px 0;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:2px}
+#next-btn{display:none;width:100%;padding:14px;border-radius:13px;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:3px;cursor:pointer;text-align:center;margin-top:10px}
+
+/* summary */
+#sum-title{font-family:'Orbitron',monospace;font-weight:700;font-size:clamp(14px,3.5vw,20px);letter-spacing:2px;text-align:center;margin-bottom:6px}
+#sum-score{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(50px,12vw,76px);line-height:1;text-align:center;margin-bottom:4px}
+#sum-sub{font-size:12px;color:#00f5ff;text-align:center;margin-bottom:24px}
+#sum-list{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:16px 14px;margin-bottom:20px}
+.sl-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:14px}
+.sl-row:last-child{border-bottom:none}
+.btn-go{display:block;width:100%;padding:14px;border-radius:13px;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:3px;cursor:pointer;text-align:center;margin-bottom:10px}
+.btn-back{display:block;width:100%;padding:11px;background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:13px;color:#44667a;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;cursor:pointer;text-align:center}
+</style>
+</head>
+<body>
+<button id="pinyin-btn" onclick="togglePinyin()">拼音 ON</button>
+
+<div id="home" class="screen active">
+  <div id="title">段落 RECALL</div>
+  <div id="sub">CHAR 4 · PARAGRAPH DRILL</div>
+  <div id="xp-lbl">⚡ <span id="xp-num">0</span> XP total</div>
+  <div class="para-box">
+    <div class="para-hdr"><span>VOCAB + SENTENCES</span><span id="para-count"></span></div>
+    <div class="para-text" id="para-preview"></div>
+  </div>
+  <button class="mode-btn" id="study-btn" onclick="showStudy()" style="background:rgba(136,68,255,.06);border:1px solid rgba(136,68,255,.35)">
+    <div class="mode-hdr"><span style="font-size:22px">📖</span><span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#8844ff;letter-spacing:2px">STUDY MODE</span><span class="mode-badge" style="color:#8844ff;border:1px solid rgba(136,68,255,.4)">START HERE</span></div>
+    <div class="mode-desc">Read all vocab with pinyin. Tap to zoom in.</div>
+  </button>
+  <button class="mode-btn" onclick="startDrill(true)" style="background:rgba(0,207,255,.06);border:1px solid rgba(0,207,255,.35)">
+    <div class="mode-hdr"><span style="font-size:22px">✏️</span><span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#00cfff;letter-spacing:2px">CHARACTER DRILL</span><span class="mode-badge" style="color:#00cfff;border:1px solid rgba(0,207,255,.4)">GUIDED</span></div>
+    <div class="mode-desc">Rebuild from scrambled tiles. English hint available.</div>
+    <div class="mode-xp">+15 XP per phrase</div>
+  </button>
+  <button class="mode-btn" onclick="startDrill(false)" style="background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.35)">
+    <div class="mode-hdr"><span style="font-size:22px">🧠</span><span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#00ff88;letter-spacing:2px">FULL RECALL</span><span class="mode-badge" style="color:#00ff88;border:1px solid rgba(0,255,136,.4)">HARD</span></div>
+    <div class="mode-desc">No hints. Pure memory.</div>
+    <div class="mode-xp">+25 XP per phrase</div>
+  </button>
+</div>
+
+<div id="study" class="screen">
+  <div class="back-row" onclick="showScreen('home')">
+    <span style="font-size:22px;color:#44667a">←</span>
+    <span style="font-family:'Orbitron',monospace;font-size:12px;color:#8844ff;letter-spacing:3px">STUDY MODE</span>
+    <span style="margin-left:auto" id="reads-badge"></span>
+  </div>
+  <div class="all-chars">
+    <div class="all-chars-lbl">TAP ANY PHRASE TO FOCUS</div>
+    <div id="all-chars-inner"></div>
+  </div>
+  <div class="focus-box">
+    <div class="focus-hdr">
+      <span style="font-family:'Orbitron',monospace;font-size:9px;color:#334d5c;letter-spacing:3px" id="focus-lbl">PHRASE 1 / 12</span>
+      <div style="display:flex;gap:6px">
+        <button class="nav-btn" onclick="navFocus(-1)">‹</button>
+        <button class="nav-btn" onclick="navFocus(1)">›</button>
+      </div>
+    </div>
+    <div class="focus-chars" id="focus-chars"></div>
+    <div class="focus-en" id="focus-en"></div>
+  </div>
+  <button class="read-btn" onclick="readThrough()" id="read-btn">▶ READ THROUGH</button>
+</div>
+
+<div id="drill" class="screen">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <span style="font-size:22px;color:#44667a;cursor:pointer" onclick="showScreen('home')">←</span>
+    <span style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px" id="drill-label">CHARACTER DRILL</span>
+    <span style="margin-left:auto;font-family:'Orbitron',monospace;font-size:11px;color:#44667a" id="drill-prog">1/12</span>
+  </div>
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+  <div id="phrase-dots"></div>
+  <div id="hint-box"></div>
+  <div id="placed-area"><div id="placed-lbl"></div><div id="placed-tiles"></div></div>
+  <div id="bank-area"><div id="bank-lbl">CHOOSE NEXT CHARACTER</div><div id="bank-tiles"></div></div>
+  <div id="drill-feedback"></div>
+  <button id="next-btn" onclick="nextPhrase()"></button>
+</div>
+
+<div id="summary" class="screen">
+  <div id="sum-title"></div>
+  <div id="sum-score"></div>
+  <div id="sum-sub"></div>
+  <div id="sum-list"></div>
+  <button class="btn-go" id="sum-again-btn" onclick="restartDrill()"></button>
+  <button class="btn-back" onclick="showScreen('home')">← HOME BASE</button>
+</div>
+
+<script>
+var SENTENCES=[
+  {chars:["环","保","袋"],py:["huán","bǎo","dài"],en:"eco / reusable bag",full:"环保袋"},
+  {chars:["组","屋","楼","下"],py:["zǔ","wū","lóu","xià"],en:"downstairs of the flat",full:"组屋楼下"},
+  {chars:["停","车","场"],py:["tíng","chē","chǎng"],en:"car park",full:"停车场"},
+  {chars:["几","辆","汽","车"],py:["jǐ","liàng","qì","chē"],en:"several cars",full:"几辆汽车"},
+  {chars:["灯","一","直","亮","着"],py:["dēng","yī","zhí","liàng","zhe"],en:"lights kept on",full:"灯一直亮着"},
+  {chars:["所","以"],py:["suǒ","yǐ"],en:"therefore / so",full:"所以"},
+  {chars:["一","张","纸"],py:["yī","zhāng","zhǐ"],en:"a piece of paper",full:"一张纸"},
+  {chars:["日","用","品"],py:["rì","yòng","pǐn"],en:"daily necessities",full:"日用品"},
+  {chars:["认","为"],py:["rèn","wéi"],en:"to think / believe",full:"认为"},
+  {chars:["责","任","感"],py:["zé","rèn","gǎn"],en:"sense of responsibility",full:"责任感"},
+  {chars:["小","明","对","我","说","我","们","一","起","回","家","吧"],py:["xiǎo","míng","duì","wǒ","shuō","wǒ","men","yī","qǐ","huí","jiā","ba"],en:"Xiao Ming said: \"Let's go home together!\"",full:"小明对我说：「我们一起回家吧！」"},
+  {chars:["如","果","我","有","很","多","钱","我","就","买","一","辆","车"],py:["rú","guǒ","wǒ","yǒu","hěn","duō","qián","wǒ","jiù","mǎi","yī","liàng","chē"],en:"If I had a lot of money, I would buy a car.",full:"如果我有很多钱，我就买一辆车。"},
+];
+
+var xp=0,showPinyin=true;
+var focusIdx=0,reads=0;
+var drillMode=true,sIdx=0,bank=[],placed=[],mistakes=0,results=[],dXpPer=15;
+var shaking=null;
+
+function load(){
+  try{xp=parseInt(localStorage.getItem('pr4_xp'))||0;showPinyin=localStorage.getItem('pinyin_on')!=='false';}catch(e){}
+  document.getElementById('xp-num').textContent=xp;
+  document.getElementById('pinyin-btn').textContent='拼音 '+(showPinyin?'ON':'OFF');
+  var total=SENTENCES.reduce(function(n,s){return n+s.chars.length;},0);
+  document.getElementById('para-count').textContent=total+'字·'+SENTENCES.length+'drills';
+  document.getElementById('para-preview').textContent=SENTENCES.map(function(s){return s.full;}).join('　');
+  buildStars();
+}
+function save(){try{localStorage.setItem('pr4_xp',xp);}catch(e){}}
+function togglePinyin(){showPinyin=!showPinyin;document.getElementById('pinyin-btn').textContent='拼音 '+(showPinyin?'ON':'OFF');try{localStorage.setItem('pinyin_on',showPinyin);}catch(e){};renderStudy();renderDrill();}
+function showScreen(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById(id).classList.add('active');}
+function buildStars(){for(var i=0;i<90;i++){var s=document.createElement('div');s.className='star';s.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;width:'+(Math.random()*1.7+.4)+'px;height:'+(Math.random()*1.7+.4)+'px;--d:'+(Math.random()*4+2)+'s;--dl:'+(Math.random()*6)+'s';document.body.appendChild(s);}}
+
+// ── STUDY ─────────────────────────────────────────────────────────────────────
+function showStudy(){focusIdx=0;renderStudy();showScreen('study');}
+function renderStudy(){
+  var inner=document.getElementById('all-chars-inner');
+  inner.innerHTML='';
+  SENTENCES.forEach(function(s,si){
+    var span=document.createElement('span');
+    span.style.cursor='pointer';span.style.display='inline-block';span.style.margin='3px 5px';
+    span.onclick=function(){focusIdx=si;renderFocus();};
+    s.chars.forEach(function(c,ci){
+      var d=document.createElement('span');d.className='char-inline';
+      d.innerHTML=(showPinyin?'<div class="py" style="color:'+(si===focusIdx?'#8844ff':'#2a3f55')+'">'+s.py[ci]+'</div>':'')+'<div class="ch" style="color:'+(si===focusIdx?'#fff':'#5577aa')+'">'+c+'</div>';
+      span.appendChild(d);
+    });
+    inner.appendChild(span);
+    if(si<SENTENCES.length-1){var dot=document.createElement('span');dot.textContent='·';dot.style.color='#2a3f55';dot.style.margin='0 2px';inner.appendChild(dot);}
+  });
+  renderFocus();
+}
+function renderFocus(){
+  var s=SENTENCES[focusIdx];
+  document.getElementById('focus-lbl').textContent='PHRASE '+(focusIdx+1)+' / '+SENTENCES.length;
+  var fc=document.getElementById('focus-chars');fc.innerHTML='';
+  s.chars.forEach(function(c,i){
+    var d=document.createElement('div');d.className='fc';
+    d.innerHTML=(showPinyin?'<div class="fc-py">'+s.py[i]+'</div>':'')+'<div class="fc-ch">'+c+'</div>';
+    fc.appendChild(d);
+  });
+  document.getElementById('focus-en').textContent=s.en;
+}
+function navFocus(dir){
+  focusIdx=Math.max(0,Math.min(SENTENCES.length-1,focusIdx+dir));
+  if(focusIdx===SENTENCES.length-1&&dir===1){reads++;document.getElementById('reads-badge').textContent=reads>0?'✅ ×'+reads:'';}
+  renderStudy();
+}
+function readThrough(){reads++;focusIdx=0;renderStudy();document.getElementById('reads-badge').textContent='✅ ×'+reads;document.getElementById('read-btn').textContent='↺ READ AGAIN';}
+
+// ── DRILL ─────────────────────────────────────────────────────────────────────
+function shuffle(a){var arr=a.slice();for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t;}return arr;}
+
+function startDrill(guided){
+  drillMode=guided;dXpPer=guided?15:25;
+  sIdx=0;results=[];placed=[];mistakes=0;
+  document.getElementById('drill-label').textContent=guided?'CHARACTER DRILL':'FULL RECALL';
+  document.getElementById('drill-label').style.color=guided?'#00cfff':'#00ff88';
+  document.getElementById('progress-fill').style.background=guided?'linear-gradient(90deg,#00cfff,#00f5ff)':'linear-gradient(90deg,#00ff88,#00f5ff)';
+  renderDrill();showScreen('drill');
+}
+function restartDrill(){startDrill(drillMode);}
+
+function renderDrill(){
+  var s=SENTENCES[sIdx];
+  var color=drillMode?'#00cfff':'#00ff88';
+  var total=SENTENCES.length;
+  document.getElementById('progress-fill').style.width=(sIdx/total*100)+'%';
+  document.getElementById('drill-prog').textContent=(sIdx+1)+'/'+total;
+  // dots
+  var dots=document.getElementById('phrase-dots');dots.innerHTML='';
+  for(var i=0;i<total;i++){var d=document.createElement('div');d.className='pdot'+(i<sIdx?' done'+(drillMode?'':'-r'):i===sIdx?' active':'');dots.appendChild(d);}
+  // hint
+  var hb=document.getElementById('hint-box');
+  if(drillMode){
+    hb.style.cssText='background:rgba(0,207,255,.04);border:1px solid rgba(0,207,255,.2);border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;';
+    hb.innerHTML='<span style="font-size:11px;color:#334d5c">Need a hint?</span><button onclick="showHint()" style="padding:4px 12px;background:rgba(0,207,255,.1);border:1px solid rgba(0,207,255,.4);border-radius:8px;color:#00cfff;font-size:11px;cursor:pointer">Show English</button>';
+  }else{hb.innerHTML='';hb.style.cssText='';}
+  // placed
+  var pa=document.getElementById('placed-area');
+  pa.style.cssText='background:rgba(0,245,255,.04);border:1px solid rgba(0,245,255,.15);border-radius:16px;padding:14px 12px;margin-bottom:14px;min-height:72px;';
+  document.getElementById('placed-lbl').textContent=placed.length===s.chars.length?'✅ COMPLETE':'BUILD · '+placed.length+'/'+s.chars.length;
+  renderPlaced();
+  // bank
+  bank=shuffle(s.chars.map(function(c,i){return{char:c,py:s.py[i],id:i+'_'+Math.random()};}));
+  placed.forEach(function(p){bank=bank.filter(function(b){return b.id!==p.id;});});
+  renderBank();
+  document.getElementById('drill-feedback').textContent='';
+  document.getElementById('next-btn').style.display='none';
+}
+
+function renderPlaced(){
+  var s=SENTENCES[sIdx];var color=drillMode?'#00cfff':'#00ff88';
+  var pt=document.getElementById('placed-tiles');pt.innerHTML='';
+  s.chars.forEach(function(ec,i){
+    var tile=placed[i];var isNext=i===placed.length&&placed.length<s.chars.length;
+    var slot=document.createElement('div');slot.className='place-slot';
+    slot.style.cssText='width:38px;height:50px;border-radius:9px;background:'+(tile?'rgba(0,245,255,.1)':isNext?'rgba(0,245,255,.07)':'transparent')+';border:1px '+(isNext?'solid rgba(0,245,255,.5)':tile?'solid '+color+'88':'dashed #1a3348')+';display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:'+(isNext?'0 0 8px rgba(0,245,255,.25)':'none');
+    if(tile)slot.innerHTML=(showPinyin?'<div class="s-py" style="font-size:7px;color:'+color+'aa;margin-bottom:1px">'+tile.py+'</div>':'')+'<div class="s-ch" style="font-family:serif;font-size:20px;color:'+(placed.length===s.chars.length?'#00ff88':'#fff')+'">'+tile.char+'</div>';
+    pt.appendChild(slot);
+  });
+  if(placed.length>0&&placed.length<s.chars.length){
+    var ub=document.createElement('button');ub.id='undo-btn';ub.textContent='⌫';
+    ub.style.cssText='width:32px;height:32px;border-radius:8px;background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.3);color:#ff4466;font-size:14px;cursor:pointer;margin-left:4px;';
+    ub.onclick=undoLast;pt.appendChild(ub);
+  }
+}
+
+function renderBank(){
+  var bt=document.getElementById('bank-tiles');bt.innerHTML='';
+  bank.forEach(function(tile){
+    var el=document.createElement('div');el.className='bank-tile';
+    el.innerHTML=(showPinyin?'<div class="t-py">'+tile.py+'</div>':'')+'<div class="t-ch">'+tile.char+'</div>';
+    el.addEventListener('touchstart',function(e){e.preventDefault();tapTile(tile,el);},{passive:false});
+    el.addEventListener('mousedown',function(){tapTile(tile,el);});
+    bt.appendChild(el);
+  });
+}
+
+function tapTile(tile,el){
+  var s=SENTENCES[sIdx];
+  if(placed.length>=s.chars.length)return;
+  var expected=s.chars[placed.length];
+  if(tile.char===expected){
+    placed.push(tile);bank=bank.filter(function(b){return b.id!==tile.id;});
+    renderPlaced();renderBank();
+    if(placed.length===s.chars.length) drillComplete();
+  }else{
+    mistakes++;
+    el.classList.add('shaking');
+    setTimeout(function(){el.classList.remove('shaking');},400);
+    var fb=document.getElementById('drill-feedback');
+    fb.textContent='❌ '+mistakes+' mistake'+(mistakes!==1?'s':'');fb.style.color='#ff4466aa';
+  }
+}
+
+function undoLast(){
+  if(!placed.length)return;
+  var last=placed.pop();bank.push(last);renderPlaced();renderBank();
+}
+
+function showHint(){
+  var s=SENTENCES[sIdx];
+  var hb=document.getElementById('hint-box');
+  hb.innerHTML='<span style="font-family:\'Exo 2\',sans-serif;font-size:13px;color:#7ab8cc;font-style:italic">"'+s.en+'"</span>';
+}
+
+function drillComplete(){
+  var earned=Math.max(0,dXpPer-mistakes*3);
+  xp+=earned;save();
+  document.getElementById('xp-num').textContent=xp;
+  var fb=document.getElementById('drill-feedback');
+  fb.textContent=mistakes===0?'⭐ PERFECT! +'+earned+' XP':'✅ DONE · '+mistakes+' mistake'+(mistakes!==1?'s':'')+' · +'+earned+' XP';
+  fb.style.color='#00ff88';
+  var nb=document.getElementById('next-btn');
+  var color=drillMode?'#00cfff':'#00ff88';
+  nb.style.cssText='display:block;width:100%;padding:14px;background:rgba(0,245,255,.08);border:1.5px solid '+color+';border-radius:13px;color:'+color+';font-family:Orbitron,monospace;font-size:13px;font-weight:700;letter-spacing:3px;cursor:pointer;text-align:center;margin-top:10px;box-shadow:0 0 16px '+color+'33;';
+  nb.textContent=sIdx+1<SENTENCES.length?'NEXT PHRASE →':'FINISH MISSION ✓';
+}
+
+function nextPhrase(){
+  results.push({sIdx:sIdx,mistakes:mistakes});
+  if(sIdx+1<SENTENCES.length){sIdx++;placed=[];mistakes=0;renderDrill();}
+  else showSummary();
+}
+
+function showSummary(){
+  var perfect=results.filter(function(r){return r.mistakes===0;}).length;
+  var total=results.length;
+  var pct=Math.round(perfect/total*100);
+  var h=[{min:100,text:"FLAWLESS! 🏆",col:"#ffd700"},{min:80,text:"EXCELLENT! 🌟",col:"#00ff88"},{min:60,text:"GOOD JOB! 💪",col:"#00cfff"},{min:0,text:"KEEP GOING! ✊",col:"#ff9900"}].find(function(x){return pct>=x.min;});
+  document.getElementById('sum-title').textContent=h.text;document.getElementById('sum-title').style.color=h.col;document.getElementById('sum-title').style.textShadow='0 0 20px '+h.col;
+  document.getElementById('sum-score').innerHTML=perfect+'<span style="font-size:40%;color:#44667a">/'+total+'</span>';document.getElementById('sum-score').style.color=h.col;document.getElementById('sum-score').style.textShadow='0 0 30px '+h.col;
+  document.getElementById('sum-sub').textContent='phrases completed perfectly';
+  var list=document.getElementById('sum-list');list.innerHTML='<div style="font-family:Orbitron,monospace;font-size:9px;color:#44667a;letter-spacing:3px;margin-bottom:12px">BREAKDOWN</div>';
+  results.forEach(function(r,i){var row=document.createElement('div');row.className='sl-row';row.innerHTML='<span>'+(r.mistakes===0?'✅':'⚠️')+'</span><span style="font-family:serif;font-size:16px;color:#99b8cc;flex:1">'+SENTENCES[r.sIdx].full+'</span><span style="font-size:11px;color:'+(r.mistakes===0?'#00ff88':'#ff9900')+'">'+( r.mistakes===0?'Perfect':r.mistakes+' err')+'</span>';list.appendChild(row);});
+  var color=drillMode?'#00cfff':'#00ff88';
+  var ab=document.getElementById('sum-again-btn');ab.textContent='↺ TRY AGAIN';ab.style.cssText='display:block;width:100%;padding:14px;background:rgba(0,245,255,.08);border:1.5px solid '+color+';border-radius:13px;color:'+color+';font-family:Orbitron,monospace;font-size:13px;font-weight:700;letter-spacing:3px;cursor:pointer;text-align:center;margin-bottom:10px;box-shadow:0 0 14px '+color+'33;';
+  showScreen('summary');
+}
+
+load();
+</script>
+</body>
+</html>
