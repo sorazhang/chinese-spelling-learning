@@ -88,11 +88,302 @@
   </div>
 
   <div id="quest-codex" class="screen">
-    <div class="back-btn" onclick="questBackToApp()">
+    <div class="back-btn" onclick="showScreen('quest-home')">
       <span class="back-arrow">←</span>
       <span class="back-label" style="color:#00f5ff">VOCAB CODEX</span>
     </div>
     <div id="quest-codex-list"></div>
+  </div>
+
+</div>
+
+<!-- RECALL GAME -->
+<div id="view-recall" class="view">
+
+  <div id="recall-home" class="screen active">
+    <div class="back-btn" onclick="recallBackToApp()">
+      <span class="back-arrow">←</span>
+      <span class="back-label" style="color:#8844ff">段落 RECALL</span>
+    </div>
+    <div id="recall-xp-lbl" style="text-align:center;font-size:13px;color:#00f5ff;margin-bottom:18px">⚡ <span id="recall-xp-num">0</span> XP total</div>
+    <div class="para-box">
+      <div class="para-hdr"><span>VOCAB + SENTENCES</span><span id="recall-para-count"></span></div>
+      <div class="para-text" id="recall-para-preview"></div>
+    </div>
+    <button class="mode-btn" onclick="showStudy()" style="background:rgba(136,68,255,.06);border:1px solid rgba(136,68,255,.35)">
+      <div class="mode-hdr"><span style="font-size:22px">📖</span><span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#8844ff;letter-spacing:2px">STUDY MODE</span><span class="mode-badge" style="color:#8844ff;border:1px solid rgba(136,68,255,.4)">START HERE</span></div>
+      <div class="mode-desc">Read all vocab with pinyin. Tap to zoom in.</div>
+    </button>
+    <button class="mode-btn" onclick="startDrill(true)" style="background:rgba(0,207,255,.06);border:1px solid rgba(0,207,255,.35)">
+      <div class="mode-hdr"><span style="font-size:22px">✏️</span><span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#00cfff;letter-spacing:2px">CHARACTER DRILL</span><span class="mode-badge" style="color:#00cfff;border:1px solid rgba(0,207,255,.4)">GUIDED</span></div>
+      <div class="mode-desc">Rebuild from scrambled tiles. English hint available.</div>
+      <div class="mode-xp">+15 XP per phrase</div>
+    </button>
+    <button class="mode-btn" onclick="startDrill(false)" style="background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.35)">
+      <div class="mode-hdr"><span style="font-size:22px">🧠</span><span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#00ff88;letter-spacing:2px">FULL RECALL</span><span class="mode-badge" style="color:#00ff88;border:1px solid rgba(0,255,136,.4)">HARD</span></div>
+      <div class="mode-desc">No hints. Pure memory.</div>
+      <div class="mode-xp">+25 XP per phrase</div>
+    </button>
+  </div>
+
+  <div id="recall-study" class="screen">
+    <div class="back-row" onclick="showScreen('recall-home')">
+      <span style="font-size:22px;color:#44667a">←</span>
+      <span style="font-family:'Orbitron',monospace;font-size:12px;color:#8844ff;letter-spacing:3px">STUDY MODE</span>
+      <span style="margin-left:auto" id="recall-reads-badge"></span>
+    </div>
+    <div class="all-chars">
+      <div class="all-chars-lbl">TAP ANY PHRASE TO FOCUS</div>
+      <div id="recall-all-chars-inner"></div>
+    </div>
+    <div class="focus-box">
+      <div class="focus-hdr">
+        <span style="font-family:'Orbitron',monospace;font-size:9px;color:#334d5c;letter-spacing:3px" id="recall-focus-lbl">PHRASE 1 / 12</span>
+        <div style="display:flex;gap:6px">
+          <button class="nav-btn" onclick="navFocus(-1)">‹</button>
+          <button class="nav-btn" onclick="navFocus(1)">›</button>
+        </div>
+      </div>
+      <div class="focus-chars" id="recall-focus-chars"></div>
+      <div class="focus-en" id="recall-focus-en"></div>
+    </div>
+    <button class="read-btn" onclick="readThrough()" id="recall-read-btn">▶ READ THROUGH</button>
+  </div>
+
+  <div id="recall-drill" class="screen">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <span style="font-size:22px;color:#44667a;cursor:pointer" onclick="showScreen('recall-home')">←</span>
+      <span style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px" id="recall-drill-label">CHARACTER DRILL</span>
+      <span style="margin-left:auto;font-family:'Orbitron',monospace;font-size:11px;color:#44667a" id="recall-drill-prog">1/12</span>
+    </div>
+    <div id="recall-progress-bar"><div id="recall-progress-fill"></div></div>
+    <div id="recall-phrase-dots"></div>
+    <div id="recall-hint-box"></div>
+    <div id="recall-placed-area"><div id="recall-placed-lbl"></div><div id="recall-placed-tiles"></div></div>
+    <div id="recall-bank-area"><div id="recall-bank-lbl">CHOOSE NEXT CHARACTER</div><div id="recall-bank-tiles"></div></div>
+    <div id="recall-drill-feedback"></div>
+    <button id="recall-next-btn" onclick="nextPhrase()"></button>
+  </div>
+
+  <div id="recall-summary" class="screen">
+    <div id="recall-sum-title"></div>
+    <div id="recall-sum-score"></div>
+    <div id="recall-sum-sub"></div>
+    <div id="recall-sum-list"></div>
+    <button class="btn-go" id="recall-sum-again-btn" onclick="restartDrill()"></button>
+    <button class="btn-back" onclick="recallBackToApp()">← HOME BASE</button>
+  </div>
+
+</div>
+
+<!-- WALL GAME -->
+<div id="view-wall" class="view">
+
+  <div id="wall-home" class="screen active">
+    <div class="back-btn" onclick="wallBackToApp()">
+      <span class="back-arrow">←</span>
+      <span class="back-label" style="color:#ff6b35">汉字 WALL</span>
+    </div>
+    <div class="how-box">
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">👁️</span><span>Read the meaning shown below the arena</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">👆</span><span>Tap the matching falling phrase</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">💥</span><span>Correct = points + COMBO bonus</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">❤️</span><span>Wrong tap or missed = lose a life</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">⚡</span><span>Every 6 hits you level up!</span></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div style="font-size:20px;margin-bottom:4px">🏆</div><div class="stat-num" id="wall-hi-val">0</div><div class="stat-lbl">BEST</div></div>
+      <div class="stat"><div style="font-size:20px;margin-bottom:4px">⚡</div><div class="stat-num" id="wall-xp-val">0</div><div class="stat-lbl">XP</div></div>
+      <div class="stat"><div style="font-size:20px;margin-bottom:4px">📖</div><div class="stat-num" id="wall-vocab-count">0</div><div class="stat-lbl">VOCAB</div></div>
+    </div>
+    <button class="btn-launch" onclick="startGame()">▶ LAUNCH</button>
+  </div>
+
+  <div id="wall-game" class="screen">
+    <div id="wall-hud">
+      <div id="wall-hearts"></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;padding:2px 8px;border-radius:6px;background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.3);color:#ff6b35" id="wall-lv-badge">LV1</div>
+      <div style="margin-left:auto;font-family:'Orbitron',monospace;font-size:18px;font-weight:700;color:#ff6b35" id="wall-score-val">0</div>
+    </div>
+    <div id="wall-combo-row"></div>
+    <div id="wall-arena">
+      <div class="col-line" style="left:33.3%"></div>
+      <div class="col-line" style="left:66.6%"></div>
+      <div id="wall-warn-zone"></div>
+      <div id="wall-warn-line"></div>
+    </div>
+    <div id="wall-target-box">
+      <div id="wall-target-label">SHOOT THE PHRASE FOR</div>
+      <div id="wall-target-meaning"></div>
+      <div id="wall-target-py"></div>
+    </div>
+  </div>
+
+  <div id="wall-over" class="screen">
+    <div id="wall-over-title">GAME OVER</div>
+    <div id="wall-over-score"></div>
+    <div id="wall-over-grade"></div>
+    <div id="wall-over-hi" style="display:none">🏆 NEW HIGH SCORE</div>
+    <div id="wall-over-xp"></div>
+    <div id="wall-over-stats">
+      <div><div class="os-val" id="wall-os-hits">0</div><div class="os-lbl">PHRASES HIT</div></div>
+      <div><div class="os-val" id="wall-os-lv">1</div><div class="os-lbl">MAX LEVEL</div></div>
+      <div><div class="os-val" id="wall-os-combo">1×</div><div class="os-lbl">MAX COMBO</div></div>
+      <div><div class="os-val" id="wall-os-hi">0</div><div class="os-lbl">HIGH SCORE</div></div>
+    </div>
+    <button class="btn-play" onclick="startGame()">▶ PLAY AGAIN</button>
+    <button class="btn-sec" onclick="wallBackToApp()">← HOME</button>
+  </div>
+
+</div>
+
+<!-- HANDWRITE GAME -->
+<div id="view-handwrite" class="view">
+
+  <div id="hw-home" class="screen active">
+    <div class="back-btn" onclick="hwBackToApp()">
+      <span class="back-arrow">←</span>
+      <span class="back-label" style="color:#00f5ff">手写 TRACE</span>
+    </div>
+    <div class="xp-panel" style="display:flex;align-items:center;justify-content:center;gap:12px">
+      <span style="font-size:28px">✍️</span>
+      <div><div id="hw-xp-val">0 <span style="font-size:12px;color:#44667a">XP</span></div><div style="font-size:10px;color:#44667a;letter-spacing:2px">TOTAL EARNED</div></div>
+    </div>
+    <div class="how-box">
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">👁️</span><span>See the English meaning + pinyin</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">✍️</span><span>Write Chinese characters with your finger</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🤖</span><span>AI checks your handwriting instantly</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">⭐</span><span>Correct = +30 XP · Partial = +10 XP</span></div>
+    </div>
+    <button class="btn-start" onclick="startSession()">✍️ START MISSION</button>
+    <button class="btn-codex" onclick="showCx()">📖 VOCAB CODEX</button>
+  </div>
+
+  <div id="hw-write" class="screen">
+    <div class="prog-bar"><div id="hw-prog-fill" class="prog-fill" style="width:0%"></div></div>
+    <div class="trace-prompt-card">
+      <div class="trace-prompt-lbl">WRITE THE CHARACTERS FOR</div>
+      <div class="trace-prompt-meaning" id="hw-prompt-meaning"></div>
+      <div class="trace-prompt-py" id="hw-prompt-py"></div>
+      <button class="peek-btn" id="hw-peek-btn" onclick="togglePeek()">👁️ Peek answer</button>
+      <div class="peek-char" id="hw-peek-char"></div>
+    </div>
+    <div class="canvas-wrap" id="hw-canvas-wrap">
+      <div class="box-overlay" id="hw-box-overlay"></div>
+      <canvas id="hw-draw-canvas" class="draw-canvas" width="1200" height="300"></canvas>
+      <div class="checking-overlay" id="hw-checking-overlay">
+        <div class="spin-ring"></div>
+        <div style="font-family:'Orbitron',monospace;font-size:10px;color:#00f5ff;letter-spacing:3px">AI CHECKING...</div>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" onclick="clearCanvas()" style="background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.3);color:#ff4466">🗑️ Clear</button>
+      <button class="ctrl-btn" id="hw-erase-btn" onclick="toggleErase()" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.15);color:#6688aa">⬜ Erase</button>
+    </div>
+    <div class="eraser-slider" id="hw-eraser-slider">
+      <span>⬜</span>
+      <input type="range" min="10" max="120" value="40" id="hw-eraser-size" style="flex:1;accent-color:#ffcc00">
+      <span id="hw-eraser-lbl" style="font-family:'Orbitron',monospace;font-size:11px;color:#ffcc00;min-width:32px;text-align:right">40px</span>
+    </div>
+    <button id="hw-ai-btn" class="ai-btn" onclick="checkHandwriting()" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);color:#334d5c" disabled>🤖 AI CHECK</button>
+    <div id="hw-self-grade-row" style="display:none">
+      <div style="font-size:10px;color:#334d5c;text-align:center;margin-bottom:8px;letter-spacing:2px">OR SELF-GRADE</div>
+      <div class="self-grade-row">
+        <button class="sg-btn" onclick="selfGrade('correct')" style="border:1px solid #00ff8855;color:#00ff88">✅ Got it</button>
+        <button class="sg-btn" onclick="selfGrade('partial')" style="border:1px solid #ffcc0055;color:#ffcc00">💪 Almost</button>
+        <button class="sg-btn" onclick="selfGrade('incorrect')" style="border:1px solid #ff446655;color:#ff4466">❌ Not yet</button>
+      </div>
+    </div>
+    <div class="feedback-card" id="hw-feedback-card">
+      <div class="fb-emoji" id="hw-fb-emoji"></div>
+      <div class="fb-label" id="hw-fb-label"></div>
+      <div class="fb-comment" id="hw-fb-comment"></div>
+      <div class="fb-answer"><div style="font-size:10px;color:#334d5c;letter-spacing:3px;margin-bottom:8px">CORRECT ANSWER</div><div class="fb-char" id="hw-fb-char"></div><div class="fb-py" id="hw-fb-py"></div></div>
+    </div>
+    <button id="hw-next-btn2" class="next-btn2" onclick="nextItem()"></button>
+  </div>
+
+  <div id="hw-summary2" class="screen">
+    <div class="sum2-title" id="hw-sum2-title"></div>
+    <div class="sum2-score" id="hw-sum2-score"></div>
+    <div class="sum2-sub" id="hw-sum2-sub"></div>
+    <div class="sum2-xp" id="hw-sum2-xp"></div>
+    <div class="sum2-list" id="hw-sum2-list"></div>
+    <button class="btn-primary" onclick="startSession()">✍️ NEW MISSION</button>
+    <button class="btn-secondary" onclick="hwBackToApp()">← HOME BASE</button>
+  </div>
+
+  <div id="hw-codex2" class="screen">
+    <div class="back-row" onclick="showScreen('hw-home')">
+      <span style="font-size:22px;color:#44667a">←</span>
+      <span style="font-family:'Orbitron',monospace;font-size:13px;color:#00f5ff;letter-spacing:3px">REFERENCE CODEX</span>
+      <span style="margin-left:auto;font-size:11px;color:#44667a">CHAR 4</span>
+    </div>
+    <div id="hw-cx2-list"></div>
+  </div>
+
+</div>
+
+<!-- DICTATION GAME -->
+<div id="view-dictation" class="view">
+
+  <div id="dict-home" class="screen active">
+    <div class="back-btn" onclick="dictBackToApp()">
+      <span class="back-arrow">←</span>
+      <span class="back-label" style="color:#ffa500">听写 DICTATION</span>
+    </div>
+    <div class="xp-panel">
+      <div style="font-size:10px;color:#44667a;letter-spacing:4px;margin-bottom:6px">TOTAL XP</div>
+      <div class="xp-val" id="dict-xp-num">0</div>
+    </div>
+    <div class="how-box">
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🔊</span><span>Listen to the word spoken in Chinese</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">✍️</span><span>Write it from memory with your finger</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🤖</span><span>AI checks your handwriting instantly</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">⭐</span><span>Correct = +30 XP · Partial = +10 XP</span></div>
+    </div>
+    <button class="btn-start" onclick="startDictation()">🔊 START LISTENING MISSION</button>
+  </div>
+
+  <div id="dict-practice" class="screen">
+    <div class="word-num" id="dict-word-num"></div>
+    <button class="speak-btn" id="dict-speak-btn" onclick="speak()">🔊</button>
+    <div class="play-lbl" id="dict-play-lbl">TAP TO HEAR THE WORD</div>
+    <button class="hint-btn" id="dict-hint-btn" onclick="toggleHint()">💡 Show pinyin hint</button>
+    <div class="hint-txt" id="dict-hint-txt"></div>
+
+    <div class="canvas-wrap" id="dict-canvas-wrap">
+      <canvas id="dict-cv" class="draw-canvas" width="800" height="260"></canvas>
+      <div class="checking-overlay" id="dict-checking-overlay">
+        <div class="spin-ring"></div>
+        <div style="font-family:'Orbitron',monospace;font-size:10px;color:#ffa500;letter-spacing:3px">AI CHECKING...</div>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" onclick="clearAll()" style="background:rgba(255,68,102,.08);border:1px solid rgba(255,68,102,.3);color:#ff4466">🗑️ Clear</button>
+      <button class="ctrl-btn" id="dict-erase-btn" onclick="toggleEraseDict()" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.15);color:#6688aa">⬜ Erase</button>
+    </div>
+    <div class="eraser-slider" id="dict-eraser-slider" style="display:flex">
+      <span>⬜</span>
+      <input type="range" min="10" max="120" value="40" id="dict-eraser-size" style="flex:1;accent-color:#ffa500">
+      <span id="dict-eraser-lbl" style="font-family:'Orbitron',monospace;font-size:11px;color:#ffa500;min-width:32px;text-align:right">40px</span>
+    </div>
+    <button id="dict-ai-btn" class="ai-btn" onclick="doCheck()" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);color:#334d5c" disabled>🤖 AI CHECK</button>
+    <div id="dict-self-grade-row" style="display:none">
+      <div style="font-size:10px;color:#334d5c;text-align:center;margin-bottom:8px;letter-spacing:2px">OR SELF-GRADE</div>
+      <div class="self-grade-row">
+        <button class="sg-btn" onclick="grade('correct')" style="border:1px solid #00ff8855;color:#00ff88">✅ Got it</button>
+        <button class="sg-btn" onclick="grade('partial')" style="border:1px solid #ffcc0055;color:#ffcc00">💪 Almost</button>
+        <button class="sg-btn" onclick="grade('incorrect')" style="border:1px solid #ff446655;color:#ff4466">❌ Not yet</button>
+      </div>
+    </div>
+    <div class="feedback-card" id="dict-feedback-card">
+      <div class="fb-emoji" id="dict-fb-emoji"></div>
+      <div class="fb-label" id="dict-fb-label"></div>
+      <div class="fb-comment" id="dict-fb-comment"></div>
+      <div class="fb-answer"><div style="font-size:10px;color:#334d5c;letter-spacing:3px;margin-bottom:8px">CORRECT ANSWER</div><div class="fb-char" id="dict-fb-char"></div><div class="fb-py" id="dict-fb-py"></div></div>
+    </div>
+    <button id="dict-next-btn" class="next-btn2" onclick="next()">NEXT WORD →</button>
   </div>
 
 </div>

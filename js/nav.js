@@ -5,7 +5,11 @@ import { S } from './data.js';
 // One entry per ported game. Each game exposes window['enter_'+id]() to
 // build its home screen when navigated to; app.js wires that exposure.
 export var GAMES = [
-  { id: 'quest', icon: '🎯', name: '汉字 QUEST', sub: 'flashcard quiz' }
+  { id: 'quest', icon: '🎯', name: '汉字 QUEST', sub: 'flashcard quiz' },
+  { id: 'recall', icon: '📖', name: '段落 RECALL', sub: 'sentence builder' },
+  { id: 'wall', icon: '🧱', name: '汉字 WALL', sub: 'character shooter' },
+  { id: 'handwrite', icon: '✍️', name: '手写 TRACE', sub: 'handwriting + AI' },
+  { id: 'dictation', icon: '🔊', name: '听写 DICTATION', sub: 'audio + handwriting' }
 ];
 
 export function navTo(viewId) {
@@ -13,6 +17,18 @@ export function navTo(viewId) {
   for (var i = 0; i < views.length; i++) views[i].classList.remove('active');
   var target = document.getElementById('view-' + viewId);
   if (target) target.classList.add('active');
+}
+
+// Generic screen switcher for nested screens within a single view (scoped
+// to that view's own .screen siblings) — used by inline handlers that
+// navigate within a game's own view rather than between top-level views.
+export function showScreen(id) {
+  var target = document.getElementById(id);
+  if (!target) return;
+  var view = target.closest('.view');
+  var siblings = view ? view.querySelectorAll('.screen') : [target];
+  for (var i = 0; i < siblings.length; i++) siblings[i].classList.remove('active');
+  target.classList.add('active');
 }
 
 export function applyRoleUI() {

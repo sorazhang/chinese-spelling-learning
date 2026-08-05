@@ -56,6 +56,20 @@ export var DEFAULT_VOCAB_SETS = {
       { char: '日用品', py: 'rì yòng pǐn', en: 'daily necessities' },
       { char: '认为', py: 'rèn wéi', en: 'to think / believe' },
       { char: '责任感', py: 'zé rèn gǎn', en: 'sense of responsibility' }
+    ],
+    sentences: [
+      { chars: ['环', '保', '袋'], py: ['huán', 'bǎo', 'dài'], en: 'eco / reusable bag', full: '环保袋' },
+      { chars: ['组', '屋', '楼', '下'], py: ['zǔ', 'wū', 'lóu', 'xià'], en: 'downstairs of the flat', full: '组屋楼下' },
+      { chars: ['停', '车', '场'], py: ['tíng', 'chē', 'chǎng'], en: 'car park', full: '停车场' },
+      { chars: ['几', '辆', '汽', '车'], py: ['jǐ', 'liàng', 'qì', 'chē'], en: 'several cars', full: '几辆汽车' },
+      { chars: ['灯', '一', '直', '亮', '着'], py: ['dēng', 'yī', 'zhí', 'liàng', 'zhe'], en: 'lights kept on', full: '灯一直亮着' },
+      { chars: ['所', '以'], py: ['suǒ', 'yǐ'], en: 'therefore / so', full: '所以' },
+      { chars: ['一', '张', '纸'], py: ['yī', 'zhāng', 'zhǐ'], en: 'a piece of paper', full: '一张纸' },
+      { chars: ['日', '用', '品'], py: ['rì', 'yòng', 'pǐn'], en: 'daily necessities', full: '日用品' },
+      { chars: ['认', '为'], py: ['rèn', 'wéi'], en: 'to think / believe', full: '认为' },
+      { chars: ['责', '任', '感'], py: ['zé', 'rèn', 'gǎn'], en: 'sense of responsibility', full: '责任感' },
+      { chars: ['小', '明', '对', '我', '说', '我', '们', '一', '起', '回', '家', '吧'], py: ['xiǎo', 'míng', 'duì', 'wǒ', 'shuō', 'wǒ', 'men', 'yī', 'qǐ', 'huí', 'jiā', 'ba'], en: 'Xiao Ming said: "Let\'s go home together!"', full: '小明对我说：「我们一起回家吧！」' },
+      { chars: ['如', '果', '我', '有', '很', '多', '钱', '我', '就', '买', '一', '辆', '车'], py: ['rú', 'guǒ', 'wǒ', 'yǒu', 'hěn', 'duō', 'qián', 'wǒ', 'jiù', 'mǎi', 'yī', 'liàng', 'chē'], en: 'If I had a lot of money, I would buy a car.', full: '如果我有很多钱，我就买一辆车。' }
     ]
   }
 };

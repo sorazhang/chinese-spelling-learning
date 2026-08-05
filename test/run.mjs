@@ -64,6 +64,20 @@ async function wireFakeBackend(page, identity, store) {
   await page.addInitScript(installFakeFirebase, identity);
 }
 
+function watchConsoleErrors(page, label) {
+  var errors = [];
+  page.on('pageerror', function(err) { errors.push(label + ': ' + err.message); });
+  page.on('console', function(msg) {
+    if (msg.type() !== 'error') return;
+    var text = msg.text();
+    // Google Fonts' CDN is unreachable inside this sandbox's network — not a
+    // real app bug, and irrelevant to what this test is checking.
+    if (text.indexOf('Failed to load resource') !== -1) return;
+    errors.push(label + ' console.error: ' + text);
+  });
+  return errors;
+}
+
 async function main() {
   var server = await startServer();
   var port = server.address().port;
@@ -76,6 +90,7 @@ async function main() {
 
   console.log('\n[1] Admin logs in first — seeds vocabSets (self-healing seed, ARCHITECTURE §7 pattern)');
   var adminPage = await browser.newPage();
+  var adminErrors = watchConsoleErrors(adminPage, 'admin');
   await wireFakeBackend(adminPage, admin, store);
   await adminPage.goto(baseUrl);
   await adminPage.waitForSelector('#view-home.active', { timeout: 10000 });
@@ -87,10 +102,12 @@ async function main() {
 
   console.log('\n[2] Student logs in, plays a full Quest round');
   var studentPage = await browser.newPage();
+  var studentErrors = watchConsoleErrors(studentPage, 'student');
   await wireFakeBackend(studentPage, student, store);
   await studentPage.goto(baseUrl);
   await studentPage.waitForSelector('#view-home.active', { timeout: 10000 });
-  await studentPage.click('.game-card');
+  assert((await studentPage.locator('.game-card').count()) === 5, 'game grid shows all 5 games');
+  await studentPage.click('.game-card:has-text("QUEST")');
   await studentPage.waitForSelector('#quest-home.active');
   await studentPage.click('#quest-home .btn-primary');
   await studentPage.waitForSelector('#quest-quiz.active');
@@ -110,8 +127,82 @@ async function main() {
   var expectedXp = sessionEntry.score * 20 + (sessionEntry.score === 5 ? 50 : 0);
   assert(sessionEntry.xpEarned === expectedXp, 'session xpEarned matches score*20(+50 perfect bonus) formula (xpEarned=' + sessionEntry.xpEarned + ')');
   assert(rec.xp === sessionEntry.xpEarned, 'progress xp total matches the one session\'s xpEarned (rec.xp=' + rec.xp + ')');
+  await studentPage.click('#quest-result button:has-text("HOME BASE")');
+  await studentPage.waitForSelector('#view-home.active');
 
-  console.log('\n[3] Admin dashboard sees the student\'s progress + session');
+  console.log('\n[3] Student plays a full Recall round (Character Drill, all phrases)');
+  await studentPage.click('.game-card:has-text("RECALL")');
+  await studentPage.waitForSelector('#recall-home.active');
+  await studentPage.click('#recall-home >> text=CHARACTER DRILL');
+  await studentPage.waitForSelector('#recall-drill.active');
+  var sentences = store.vocabSets.c4.sentences;
+  for (var si = 0; si < sentences.length; si++) {
+    var expectedChars = sentences[si].chars;
+    for (var ci = 0; ci < expectedChars.length; ci++) {
+      var nextChar = expectedChars[ci];
+      await studentPage.locator('#recall-bank-tiles .bank-tile .t-ch', { hasText: nextChar }).first().click();
+    }
+    await studentPage.waitForSelector('#recall-next-btn:visible');
+    await studentPage.click('#recall-next-btn');
+  }
+  await studentPage.waitForSelector('#recall-summary.active', { timeout: 5000 });
+  assert(store.progress['owen-uid']['c4_recall'] && store.progress['owen-uid']['c4_recall'].xp > 0, 'progress/owen-uid/c4_recall written with xp > 0 (xp=' + store.progress['owen-uid']['c4_recall'].xp + ')');
+  var recallSessions = Object.keys(store.sessions['owen-uid']).length;
+  await studentPage.click('#recall-summary >> text=HOME BASE');
+  await studentPage.waitForSelector('#view-home.active');
+
+  console.log('\n[4] Student plays Wall until natural game-over (no taps — tiles escape and deplete hp)');
+  await studentPage.click('.game-card:has-text("WALL")');
+  await studentPage.waitForSelector('#wall-home.active');
+  await studentPage.click('#wall-home >> text=LAUNCH');
+  await studentPage.waitForSelector('#wall-game.active');
+  await studentPage.waitForSelector('#wall-over.active', { timeout: 45000 });
+  assert(store.progress['owen-uid']['c4_wall'] !== undefined, 'progress/owen-uid/c4_wall written after game over');
+  assert(Object.keys(store.sessions['owen-uid']).length === recallSessions + 1, 'exactly one new session logged for wall');
+  await studentPage.click('#wall-over >> text=HOME');
+  await studentPage.waitForSelector('#view-home.active');
+
+  console.log('\n[5] Student plays a full Handwrite round via self-grade (AI endpoint not configured in this stub)');
+  await studentPage.click('.game-card:has-text("TRACE")');
+  await studentPage.waitForSelector('#hw-home.active');
+  await studentPage.click('#hw-home >> text=START MISSION');
+  await studentPage.waitForSelector('#hw-write.active');
+  var vocabCount = store.vocabSets.c4.vocab.length;
+  for (var vi = 0; vi < vocabCount; vi++) {
+    var canvasBox = await studentPage.locator('#hw-draw-canvas').boundingBox();
+    await studentPage.mouse.move(canvasBox.x + 20, canvasBox.y + 20);
+    await studentPage.mouse.down();
+    await studentPage.mouse.move(canvasBox.x + 60, canvasBox.y + 60);
+    await studentPage.mouse.up();
+    await studentPage.click('#hw-self-grade-row >> text=Got it');
+    await studentPage.waitForSelector('#hw-next-btn2:visible');
+    await studentPage.click('#hw-next-btn2');
+  }
+  await studentPage.waitForSelector('#hw-summary2.active', { timeout: 5000 });
+  assert(store.progress['owen-uid']['c4_handwrite'] && store.progress['owen-uid']['c4_handwrite'].xp === vocabCount * 30, 'progress/owen-uid/c4_handwrite xp = ' + vocabCount + ' × 30 (all self-graded correct)');
+  await studentPage.click('#hw-summary2 >> text=HOME BASE');
+  await studentPage.waitForSelector('#view-home.active');
+
+  console.log('\n[6] Student plays a full Dictation round via self-grade');
+  await studentPage.click('.game-card:has-text("DICTATION")');
+  await studentPage.waitForSelector('#dict-home.active');
+  await studentPage.click('#dict-home >> text=START LISTENING MISSION');
+  await studentPage.waitForSelector('#dict-practice.active');
+  for (var di = 0; di < vocabCount; di++) {
+    var dictCanvasBox = await studentPage.locator('#dict-cv').boundingBox();
+    await studentPage.mouse.move(dictCanvasBox.x + 20, dictCanvasBox.y + 20);
+    await studentPage.mouse.down();
+    await studentPage.mouse.move(dictCanvasBox.x + 60, dictCanvasBox.y + 60);
+    await studentPage.mouse.up();
+    await studentPage.click('#dict-self-grade-row >> text=Got it');
+    await studentPage.waitForSelector('#dict-next-btn:visible');
+    await studentPage.click('#dict-next-btn');
+  }
+  assert(store.progress['owen-uid']['c4_dictation'] && store.progress['owen-uid']['c4_dictation'].xp === vocabCount * 30, 'progress/owen-uid/c4_dictation xp = ' + vocabCount + ' × 30 (all self-graded correct)');
+  await studentPage.evaluate(function() { window.dictBackToApp(); });
+  await studentPage.waitForSelector('#view-home.active');
+
+  console.log('\n[7] Admin dashboard sees the student\'s progress + sessions across all 5 games');
   await adminPage.click('#home-admin .btn-primary');
   await adminPage.waitForSelector('#view-dashboard.active');
   await adminPage.waitForFunction(function() {
@@ -120,9 +211,12 @@ async function main() {
   var dashText = await adminPage.textContent('#dash-list');
   assert(dashText.includes('Owen'), 'dashboard student list shows "Owen"');
   var sessText = await adminPage.textContent('#dash-sessions');
-  assert(sessText.includes('quest'), 'dashboard session history shows the quest session');
+  for (var gi = 0; gi < ['quest', 'recall', 'wall', 'handwrite', 'dictation'].length; gi++) {
+    var gname = ['quest', 'recall', 'wall', 'handwrite', 'dictation'][gi];
+    assert(sessText.includes(gname), 'dashboard session history shows a ' + gname + ' session');
+  }
 
-  console.log('\n[4] Hostile checks — student page calls the database directly, bypassing all app UI');
+  console.log('\n[8] Hostile checks — student page calls the database directly, bypassing all app UI');
   var deniedWholeProgress = await studentPage.evaluate(function() {
     return window.firebase.database().ref('progress').once('value').then(function() { return 'ALLOWED'; }).catch(function(e) { return 'DENIED: ' + e.message; });
   });
@@ -147,6 +241,10 @@ async function main() {
     return window.firebase.database().ref('vocabSets/c4').set({ hacked: true }).then(function() { return 'ALLOWED'; }).catch(function(e) { return 'DENIED: ' + e.message; });
   });
   assert(studentDeniedVocabWrite.startsWith('DENIED'), 'student writing vocabSets/c4 (admin-only content) is denied: ' + studentDeniedVocabWrite);
+
+  console.log('\n[9] No uncaught JS errors on either page across the whole run');
+  assert(adminErrors.length === 0, 'admin page had no console/page errors' + (adminErrors.length ? ':\n    ' + adminErrors.join('\n    ') : ''));
+  assert(studentErrors.length === 0, 'student page had no console/page errors' + (studentErrors.length ? ':\n    ' + studentErrors.join('\n    ') : ''));
 
   await browser.close();
   server.close();

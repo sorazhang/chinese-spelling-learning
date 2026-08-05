@@ -5,13 +5,28 @@
 // via the single window-exposure call at the bottom of this file. Keep
 // that list authoritative — see ARCHITECTURE.md for the audit script
 // that checks it against index.html.
+//
+// nav.js's game grid looks up window['enter_' + game.id] to build a game's
+// home screen when its card is tapped — every game's enter function MUST be
+// exposed under that exact enter_<id> key (not camelCase) or the card will
+// silently no-op on tap.
 
 import { fbAuth, onAuthStateChanged, signOut } from './firebase.js';
 import { S, isAdmin, loadVocabSets, ensureSeedVocabSets, loadProgress, loadUserProfile, saveUserProfile } from './data.js';
-import { navTo, applyRoleUI, buildGameGrid } from './nav.js';
+import { navTo, showScreen, applyRoleUI, buildGameGrid } from './nav.js';
 import { toggleAuthMode, submitAuth, requestPasswordReset } from './auth.js';
 import { buildStars } from './utils.js';
 import { enterQuest, questBackToApp, startQuiz, selectOpt, showCodex } from './quest.js';
+import { enterRecall, recallBackToApp, showStudy, navFocus, readThrough, startDrill, restartDrill, undoLast, showHint, nextPhrase } from './recall.js';
+import { enterWall, wallBackToApp, startGame } from './wall.js';
+import {
+  enterHandwrite, hwBackToApp, showCx, startSession, togglePeek, toggleErase,
+  clearCanvas, checkHandwriting, selfGrade, nextItem, initCanvas as initHwCanvas
+} from './handwrite.js';
+import {
+  enterDictation, dictBackToApp, startDictation, clearAll, toggleEraseDict,
+  speak, toggleHint, doCheck, grade, next as dictNext, initCanvas as initDictCanvas
+} from './dictation.js';
 import { enterDashboard, dashboardBackToApp } from './dashboard.js';
 
 function togglePinyin() {
@@ -69,6 +84,8 @@ function boot() {
   try { S.pinyinOn = localStorage.getItem('pinyin_on') !== 'false'; } catch (e) {}
   document.getElementById('pinyin-btn').textContent = '拼音 ' + (S.pinyinOn ? 'ON' : 'OFF');
   buildStars();
+  initHwCanvas();
+  initDictCanvas();
 
   document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
@@ -87,13 +104,57 @@ Object.assign(window, {
   togglePinyin: togglePinyin,
   doLogout: doLogout,
   navTo: navTo,
-  enterQuest: enterQuest,
+  showScreen: showScreen,
+  enterDashboard: enterDashboard,
+  dashboardBackToApp: dashboardBackToApp,
+
+  // Quest
+  enter_quest: enterQuest,
   questBackToApp: questBackToApp,
   startQuiz: startQuiz,
   selectOpt: selectOpt,
   showCodex: showCodex,
-  enterDashboard: enterDashboard,
-  dashboardBackToApp: dashboardBackToApp
+
+  // Recall
+  enter_recall: enterRecall,
+  recallBackToApp: recallBackToApp,
+  showStudy: showStudy,
+  navFocus: navFocus,
+  readThrough: readThrough,
+  startDrill: startDrill,
+  restartDrill: restartDrill,
+  undoLast: undoLast,
+  showHint: showHint,
+  nextPhrase: nextPhrase,
+
+  // Wall
+  enter_wall: enterWall,
+  wallBackToApp: wallBackToApp,
+  startGame: startGame,
+
+  // Handwrite
+  enter_handwrite: enterHandwrite,
+  hwBackToApp: hwBackToApp,
+  showCx: showCx,
+  startSession: startSession,
+  togglePeek: togglePeek,
+  toggleErase: toggleErase,
+  clearCanvas: clearCanvas,
+  checkHandwriting: checkHandwriting,
+  selfGrade: selfGrade,
+  nextItem: nextItem,
+
+  // Dictation
+  enter_dictation: enterDictation,
+  dictBackToApp: dictBackToApp,
+  startDictation: startDictation,
+  clearAll: clearAll,
+  toggleEraseDict: toggleEraseDict,
+  speak: speak,
+  toggleHint: toggleHint,
+  doCheck: doCheck,
+  grade: grade,
+  next: dictNext
 });
 
 boot();

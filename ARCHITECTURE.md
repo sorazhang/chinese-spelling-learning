@@ -113,7 +113,7 @@ sessions/{uid}/{sessionId}          -- {setId, game, score, total, xpEarned, ts}
 shared parent with a `uid` field) specifically so the admin's dashboard can
 read the whole collection in one call while a student's own reads/writes
 are confined to their own subtree — see `database.rules.json` for the
-actual rule, and `test/run.mjs` §4 for the isolation proof. This is the
+actual rule, and `test/run.mjs`'s "Hostile checks" step for the isolation proof. This is the
 "shared collection with a personal sub-part" pattern — putting the owner's
 id in the *path*, not just a field, is what makes the isolation real
 instead of just something the app's own UI happens not to expose.
@@ -127,7 +127,27 @@ Nothing is stored as a single array value that gets overwritten wholesale
 to one record never risks clobbering another client's concurrent edit to a
 different one.
 
-## 7. Testing without a real Firebase project
+## 7. AI grading: server-side proxy, not a client-side API key
+
+Handwrite and Dictation both grade a photo of the student's handwriting
+via the Anthropic Messages API. The client **never** calls
+`api.anthropic.com` directly and never holds a real API key — both
+`js/handwrite.js` and `js/dictation.js` `fetch('/api/grade', {...})`
+instead, a same-origin Vercel serverless function (`api/grade.js`) that
+reads `ANTHROPIC_API_KEY` from a server-side environment variable and
+proxies the request. A real key embedded in shipped browser JS would be
+extractable via view-source by any visitor and usable to run up charges on
+whoever's account it belongs to — this is the one place in the app where
+"no custom server" (§1) still gets a one-file serverless exception, because
+the alternative is a leaked credential.
+
+Both games are written to degrade gracefully: if `/api/grade` errors for
+any reason (key not configured yet, network failure, malformed response),
+they fall back to the existing manual self-grade buttons rather than
+blocking play. See §9 for the Vercel environment variable setup this
+still needs.
+
+## 8. Testing without a real Firebase project
 
 `test/run.mjs` (`node test/run.mjs`) spins up a static file server for this
 repo, launches two Chromium pages via Playwright — one "logged in" as the
@@ -151,39 +171,54 @@ they're independent re-implementations on purpose (so the test doesn't
 just trivially agree with itself), but that also means a rules change
 needs both files updated.
 
-## 8. Firebase project setup (not done yet)
+## 9. Deployment
 
-`js/firebase.js` has a placeholder `firebaseConfig` and `database.rules.json`
-is the rules source of truth, but no real Firebase project exists yet. To
-go live: create a project, enable Email/Password auth, enable Realtime
-Database, paste `database.rules.json` into the console's Rules tab, and
-replace the placeholder config. `ADMIN_EMAIL` in `js/firebase.js` and the
-admin checks baked into `database.rules.json` must match exactly.
+Live at `chinese-spelling-learning.com`, hosted on Vercel (zero-config
+static deploy from `main` — no build command, no output directory) with
+DNS pointed at Vercel from Namecheap. Firebase project `chinese-spelling-learing`
+is live: Email/Password auth enabled, Realtime Database created
+(`asia-southeast1`), `database.rules.json` published to its Rules tab, and
+`js/firebase.js` has the real `firebaseConfig` filled in. `ADMIN_EMAIL` in
+`js/firebase.js` and the admin checks baked into `database.rules.json` must
+always match exactly.
 
-## 9. Git workflow
+**AI grading needs one more manual step**: `api/grade.js` (a Vercel
+serverless function, see §6.1) reads `ANTHROPIC_API_KEY` from the
+environment — until that's set in Vercel → Project → Settings →
+Environment Variables (get a key at console.anthropic.com, then redeploy),
+Handwrite/Dictation's 🤖 AI CHECK button will fail and both games fall back
+to their manual self-grade buttons, which work with no configuration.
+
+Real accounts already exist in the live project, so per §10 below, further
+merges to `main` need a human OK before pushing, not just a passing test
+run.
+
+## 10. Git workflow
 
 - Develop on a feature branch, run `node test/run.mjs` before merging.
 - Only pause for human confirmation before merging once real user data
   exists in the real Firebase project — until then this is a solo
-  low-stakes app and merging after a passing test run is fine.
+  low-stakes app and merging after a passing test run is fine. (This
+  project has crossed that line — see §9.)
 
-## 10. Migration status (old single-file games → new PWA)
+## 11. Migration status (old single-file games → new PWA)
 
 | Game | Status |
 |---|---|
 | 汉字 QUEST | ✅ Ported to `js/quest.js` — reference implementation |
-| 段落 RECALL | ⬜ Still `char4-recall.html` (old approach, §11 below) |
-| 汉字 WALL | ⬜ Still `char4-wall.html` |
-| 手写 TRACE | ⬜ Still `char4-handwrite.html` (also needs the AI-grading fetch() call ported) |
-| 听写 DICTATION | ⬜ Still `char4-dictation.html` |
+| 段落 RECALL | ✅ Ported to `js/recall.js` |
+| 汉字 WALL | ✅ Ported to `js/wall.js` |
+| 手写 TRACE | ✅ Ported to `js/handwrite.js` — AI grading via `api/grade.js` (§7), see §9 for the env var it needs |
+| 听写 DICTATION | ✅ Ported to `js/dictation.js` — same AI-grading path as Handwrite |
 
-The old `char4-*.html` files and `_template.html` are left in place
-untouched until every game has a `js/*.js` equivalent — deleting them now
-would leave Owen without 4 of the 5 games. Each remaining port follows the
-same pattern as `quest.js`: read vocab from `S.vocabSets`, save progress via
-`saveProgressRecord`, log a session via `logSession`, expose its handlers
-in `app.js`. Once all five are ported and verified with `test/run.mjs`,
-remove the old files and the sections below.
+All five games are now ported and pass `test/run.mjs`. The old
+`char4-*.html` files and `_template.html` are still left in the repo
+(harmless, unreferenced by `index.html`) — safe to delete once you've
+confirmed the live site covers everything you need from them, at which
+point the "Superseded" section below can go too. Each port follows the
+same pattern as `quest.js`: read vocab from `S.vocabSets`, save progress
+via `saveProgressRecord`, log a session via `logSession`, expose its
+handlers in `app.js`.
 
 ---
 
