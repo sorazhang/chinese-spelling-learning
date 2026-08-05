@@ -10,24 +10,25 @@
 // function signatures (`get(ref)`, `set(ref, val)`, ...) the rest of the app
 // already uses, so app code never touches `window.firebase` directly.
 //
-// TODO before this app can run for real:
-//   1. Create a Firebase project at https://console.firebase.google.com
-//   2. Enable Authentication → Email/Password sign-in method
-//   3. Enable Realtime Database, then paste database.rules.json (repo root)
-//      into the Rules tab in the console
-//   4. Replace firebaseConfig below with your project's real config
-//      (Project settings → General → Your apps → SDK setup and config)
-//   5. Set ADMIN_EMAIL to the parent/teacher account's real login email
-//      (must match database.rules.json's admin check exactly)
+// Project: chinese-spelling-learing (console.firebase.google.com)
+//
+// TODO — one thing still missing before this can run for real:
+//   Realtime Database hasn't been created yet in this project, so
+//   `databaseURL` below is a placeholder. Console → Build → Realtime
+//   Database → Create Database (asia-southeast1 recommended) → the real
+//   URL appears at the top of that page (looks like
+//   https://chinese-spelling-learing-default-rtdb.asia-southeast1.firebasedatabase.app)
+//   — paste it in below, then Rules tab → paste in database.rules.json → Publish.
 
 var firebaseConfig = {
-  apiKey: 'TODO-REPLACE-ME',
-  authDomain: 'TODO-REPLACE-ME.firebaseapp.com',
-  databaseURL: 'https://TODO-REPLACE-ME-default-rtdb.firebaseio.com',
-  projectId: 'TODO-REPLACE-ME',
-  storageBucket: 'TODO-REPLACE-ME.appspot.com',
-  messagingSenderId: 'TODO-REPLACE-ME',
-  appId: 'TODO-REPLACE-ME'
+  apiKey: 'AIzaSyBEd07yrHdhU0LCvgqhRDsPrtESQsQv-LM',
+  authDomain: 'chinese-spelling-learing.firebaseapp.com',
+  databaseURL: 'TODO-REPLACE-ME', // fill in after creating Realtime Database — see note above
+  projectId: 'chinese-spelling-learing',
+  storageBucket: 'chinese-spelling-learing.firebasestorage.app',
+  messagingSenderId: '39192044329',
+  appId: '1:39192044329:web:f9aaff8ef955e03c0fcd38',
+  measurementId: 'G-WZET0P5XT0'
 };
 
 export var ADMIN_EMAIL = 'sorazhang@gmail.com';
