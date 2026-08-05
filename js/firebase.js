@@ -12,18 +12,14 @@
 //
 // Project: chinese-spelling-learing (console.firebase.google.com)
 //
-// TODO — one thing still missing before this can run for real:
-//   Realtime Database hasn't been created yet in this project, so
-//   `databaseURL` below is a placeholder. Console → Build → Realtime
-//   Database → Create Database (asia-southeast1 recommended) → the real
-//   URL appears at the top of that page (looks like
-//   https://chinese-spelling-learing-default-rtdb.asia-southeast1.firebasedatabase.app)
-//   — paste it in below, then Rules tab → paste in database.rules.json → Publish.
+// Still needed before this runs for real (see ARCHITECTURE.md §8):
+//   - Realtime Database → Rules tab → paste in database.rules.json → Publish
+//   - Authentication → Sign-in method → enable Email/Password
 
 var firebaseConfig = {
   apiKey: 'AIzaSyBEd07yrHdhU0LCvgqhRDsPrtESQsQv-LM',
   authDomain: 'chinese-spelling-learing.firebaseapp.com',
-  databaseURL: 'TODO-REPLACE-ME', // fill in after creating Realtime Database — see note above
+  databaseURL: 'https://chinese-spelling-learing-default-rtdb.asia-southeast1.firebasedatabase.app',
   projectId: 'chinese-spelling-learing',
   storageBucket: 'chinese-spelling-learing.firebasestorage.app',
   messagingSenderId: '39192044329',
