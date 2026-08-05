@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="dark"/>
+<title>Chinese Learning Quest</title>
+<link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+
+<div id="toast"></div>
+<button id="pinyin-btn" style="display:none" onclick="togglePinyin()">拼音 ON</button>
+<button id="logout-btn" style="display:none" onclick="doLogout()">LOG OUT</button>
+<div id="who-badge" style="display:none"></div>
+
+<!-- AUTH -->
+<div id="view-auth" class="view active">
+  <div class="title">CHINESE QUEST</div>
+  <div class="sub">SIGN IN TO CONTINUE</div>
+  <div class="auth-box">
+    <div id="auth-error"></div>
+    <input id="auth-email" type="email" placeholder="Email" autocomplete="username"/>
+    <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password"/>
+    <div id="auth-name-field" style="display:none">
+      <input id="auth-name" type="text" placeholder="Display name"/>
+    </div>
+    <button class="btn-primary" id="auth-submit-btn" onclick="submitAuth()">LOGIN</button>
+    <button class="btn-secondary" onclick="requestPasswordReset()">FORGOT PASSWORD?</button>
+    <div class="auth-switch" id="auth-switch-label" onclick="toggleAuthMode()">No account? Sign up</div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="view-home" class="view">
+  <div class="title">CHINESE QUEST</div>
+  <div class="sub" id="home-sub"></div>
+
+  <div id="home-student">
+    <div class="game-grid" id="game-grid"></div>
+  </div>
+
+  <div id="home-admin" style="display:none">
+    <button class="btn-primary" onclick="enterDashboard()">📊 VIEW STUDENT PROGRESS</button>
+  </div>
+</div>
+
+<!-- QUEST GAME -->
+<div id="view-quest" class="view">
+
+  <div id="quest-home" class="screen active">
+    <div class="back-btn" onclick="questBackToApp()">
+      <span class="back-arrow">←</span>
+      <span class="back-label" style="color:#00f5ff">汉字 QUEST</span>
+    </div>
+    <div class="xp-panel">
+      <div style="font-size:10px;color:#44667a;letter-spacing:4px;margin-bottom:6px">TOTAL XP</div>
+      <div class="xp-val" id="quest-xp-val">0 XP</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-icon">🔥</div><div class="stat-num" id="quest-streak">0</div><div class="stat-lbl">STREAK</div></div>
+      <div class="stat"><div class="stat-icon">✅</div><div class="stat-num" id="quest-correct">0</div><div class="stat-lbl">CORRECT</div></div>
+      <div class="stat"><div class="stat-icon">📖</div><div class="stat-num" id="quest-vocab-count">0</div><div class="stat-lbl">VOCAB</div></div>
+    </div>
+    <button class="btn-primary" onclick="startQuiz()">▶ LAUNCH MISSION</button>
+    <button class="btn-secondary" onclick="showCodex()">📖 VOCAB CODEX</button>
+  </div>
+
+  <div id="quest-quiz" class="screen">
+    <div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+    <div id="dots"></div>
+    <div id="prompt-card">
+      <div id="prompt-label"></div>
+      <div id="prompt-text"></div>
+      <div id="prompt-pinyin"></div>
+    </div>
+    <div id="options"></div>
+    <div id="feedback-text"></div>
+  </div>
+
+  <div id="quest-result" class="screen">
+    <div id="result-title"></div>
+    <div id="result-score"></div>
+    <div id="result-xp"></div>
+    <div id="result-list"></div>
+    <button class="btn-primary" onclick="startQuiz()">▶ NEW MISSION</button>
+    <button class="btn-secondary" onclick="questBackToApp()">← HOME BASE</button>
+  </div>
+
+  <div id="quest-codex" class="screen">
+    <div class="back-btn" onclick="questBackToApp()">
+      <span class="back-arrow">←</span>
+      <span class="back-label" style="color:#00f5ff">VOCAB CODEX</span>
+    </div>
+    <div id="quest-codex-list"></div>
+  </div>
+
+</div>
+
+<!-- DASHBOARD (admin) -->
+<div id="view-dashboard" class="view">
+  <div class="back-btn" onclick="dashboardBackToApp()">
+    <span class="back-arrow">←</span>
+    <span class="back-label" style="color:#00f5ff">STUDENT PROGRESS</span>
+  </div>
+  <div id="dash-list"></div>
+  <div class="sub" style="text-align:left;letter-spacing:2px;margin:18px 0 8px">RECENT SESSIONS</div>
+  <div id="dash-sessions"></div>
+</div>
+
+<script>
+// Load the real Firebase compat SDK, unless a test harness has already
+// injected a fake window.firebase via page.addInitScript (see
+// ARCHITECTURE.md §10 / test/). document.write here is intentional: it
+// guarantees these load synchronously, in order, before the deferred
+// type=module script below runs.
+if (!window.firebase) {
+  var FIREBASE_SDK_SRCS = [
+    'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js',
+    'https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js'
+  ];
+  for (var i = 0; i < FIREBASE_SDK_SRCS.length; i++) {
+    document.write('<script src="' + FIREBASE_SDK_SRCS[i] + '"><\/script>');
+  }
+}
+</script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

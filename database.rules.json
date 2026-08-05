@@ -1,0 +1,42 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "vocabSets": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.email === 'sorazhang@gmail.com'"
+    },
+
+    "users": {
+      ".read": "auth != null && auth.token.email === 'sorazhang@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'sorazhang@gmail.com'",
+      "$uid": {
+        ".read": "auth != null && ($uid === auth.uid || auth.token.email === 'sorazhang@gmail.com')",
+        ".write": "auth != null && ($uid === auth.uid || auth.token.email === 'sorazhang@gmail.com')"
+      }
+    },
+
+    "progress": {
+      ".read": "auth != null && auth.token.email === 'sorazhang@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'sorazhang@gmail.com'",
+      "$uid": {
+        ".read": "auth != null && ($uid === auth.uid || auth.token.email === 'sorazhang@gmail.com')",
+        "$recordId": {
+          ".write": "auth != null && ($uid === auth.uid || auth.token.email === 'sorazhang@gmail.com')"
+        }
+      }
+    },
+
+    "sessions": {
+      ".read": "auth != null && auth.token.email === 'sorazhang@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'sorazhang@gmail.com'",
+      "$uid": {
+        ".read": "auth != null && ($uid === auth.uid || auth.token.email === 'sorazhang@gmail.com')",
+        "$sessionId": {
+          ".write": "auth != null && ($uid === auth.uid || auth.token.email === 'sorazhang@gmail.com')"
+        }
+      }
+    }
+  }
+}
