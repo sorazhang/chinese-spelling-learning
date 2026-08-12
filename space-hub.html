@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="dark"/>
+<title>星际 HUB – fly to a game</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Exo+2:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#010306;color:#fff;font-family:'Exo 2',sans-serif;overflow:hidden;display:flex;align-items:center;justify-content:center}
+@keyframes glow{0%,100%{text-shadow:0 0 10px currentColor}50%{text-shadow:0 0 26px currentColor}}
+
+.wrap{position:relative;width:100%;max-width:640px;padding:14px}
+#title{font-family:'Orbitron',monospace;font-size:clamp(20px,5.5vw,28px);font-weight:900;color:#00f5ff;letter-spacing:3px;text-align:center;animation:glow 2.5s ease-in-out infinite;margin-bottom:2px}
+#sub{text-align:center;font-size:10px;color:#3a5568;letter-spacing:4px;margin-bottom:10px}
+
+canvas{display:block;width:100%;background:#010306;border:2px solid rgba(0,245,255,.3);border-radius:14px;touch-action:none}
+
+#trail{display:flex;justify-content:center;gap:10px;margin-top:10px}
+.trail-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.15);opacity:.4;transition:all .3s}
+.trail-dot.visited{opacity:1;box-shadow:0 0 12px currentColor}
+.trail-dot.current{opacity:1;transform:scale(1.2);box-shadow:0 0 16px currentColor}
+
+#hint{text-align:center;font-size:11px;color:#3a5568;margin-top:10px;letter-spacing:1px}
+
+#arrive{position:fixed;inset:0;background:rgba(2,6,12,.92);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;z-index:50;padding:20px}
+#arrive.show{display:flex}
+#arrive-icon{font-size:56px}
+#arrive-title{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;letter-spacing:2px}
+#arrive-sub{font-size:12px;color:#5577aa;letter-spacing:2px}
+#arrive-play{margin-top:8px;padding:15px 34px;border-radius:14px;font-family:'Orbitron',monospace;font-size:14px;font-weight:900;letter-spacing:3px;cursor:pointer;text-decoration:none;display:inline-block}
+#arrive-next{padding:11px 26px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:13px;color:#44667a;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div id="title">星际 HUB</div>
+  <div id="sub">FLY THROUGH SPACE · LAND ON A GAME</div>
+  <canvas id="cv" width="620" height="380"></canvas>
+  <div id="trail"></div>
+  <div id="hint">DRAG / ARROW KEYS TO STEER — YOUR SHIP FLIES FORWARD ON ITS OWN</div>
+</div>
+
+<div id="arrive">
+  <div id="arrive-icon"></div>
+  <div id="arrive-title"></div>
+  <div id="arrive-sub">ORBIT REACHED</div>
+  <a id="arrive-play" href="https://chinese-spelling-learning.com" target="_blank" rel="noopener">▶ PLAY THIS GAME</a>
+  <button id="arrive-next">🚀 CONTINUE JOURNEY</button>
+</div>
+
+<script>
+var PLANETS = [
+  { id:'quest',     icon:'🎯', name:'汉字 QUEST',    color:'#00f5ff' },
+  { id:'recall',    icon:'📖', name:'段落 RECALL',   color:'#8844ff' },
+  { id:'wall',      icon:'🧱', name:'汉字 WALL',     color:'#ff6b35' },
+  { id:'handwrite', icon:'✍️', name:'手写 TRACE',    color:'#22ffaa' },
+  { id:'dictation', icon:'🔊', name:'听写 DICTATION',color:'#ffa500' }
+];
+
+var cv = document.getElementById('cv');
+var ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var CX = W/2, HORIZON = H*0.42;
+
+var planetIdx = 0;
+var approach = 0;        // 0 (far) -> 1 (arrived)
+var shipX = 0;            // steering offset, -1..1
+var steerTarget = 0;
+var stars = [];
+var visited = [];
+var arriving = false;
+var raf;
+
+for (var i = 0; i < 140; i++) {
+  stars.push({ a: Math.random()*Math.PI*2, r: Math.random()*260, speed: 0.6 + Math.random()*1.8 });
+}
+
+function buildTrail(){
+  var t = document.getElementById('trail');
+  t.innerHTML = '';
+  PLANETS.forEach(function(p, i){
+    var d = document.createElement('div');
+    d.className = 'trail-dot' + (visited.indexOf(p.id) > -1 ? ' visited' : '') + (i === planetIdx ? ' current' : '');
+    d.style.color = p.color;
+    d.textContent = p.icon;
+    t.appendChild(d);
+  });
+}
+buildTrail();
+
+function drawStarfield(dt){
+  ctx.fillStyle = '#010306';
+  ctx.fillRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(CX, HORIZON);
+  for (var i = 0; i < stars.length; i++) {
+    var s = stars[i];
+    s.r += s.speed * dt * 0.06 * (1 + approach*1.6);
+    if (s.r > 300) { s.r = 10; s.a = Math.random()*Math.PI*2; }
+    var x = Math.cos(s.a) * s.r;
+    var y = Math.sin(s.a) * s.r * 0.5;
+    var sz = Math.max(0.5, s.r/300*2.2);
+    ctx.fillStyle = 'rgba(255,255,255,' + Math.min(1, s.r/120) + ')';
+    ctx.fillRect(x, y, sz, sz);
+  }
+  ctx.restore();
+}
+
+function drawPlanet(p, dt){
+  approach = Math.min(1, approach + dt * 0.00028);
+  var radius = 8 + approach*approach*150;
+  var px = CX + shipX*40*(1-approach);
+  var py = HORIZON - 20 - (1-approach)*30;
+
+  // glow
+  var grad = ctx.createRadialGradient(px, py, radius*0.2, px, py, radius*1.6);
+  grad.addColorStop(0, p.color + 'aa');
+  grad.addColorStop(1, p.color + '00');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(px, py, radius*1.6, 0, Math.PI*2);
+  ctx.fill();
+
+  // sphere body
+  var sphereGrad = ctx.createRadialGradient(px - radius*0.35, py - radius*0.35, radius*0.1, px, py, radius);
+  sphereGrad.addColorStop(0, '#ffffff');
+  sphereGrad.addColorStop(0.25, p.color);
+  sphereGrad.addColorStop(1, '#050912');
+  ctx.fillStyle = sphereGrad;
+  ctx.beginPath();
+  ctx.arc(px, py, radius, 0, Math.PI*2);
+  ctx.fill();
+
+  if (radius > 26) {
+    ctx.font = (radius*0.4) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.icon, px, py);
+    if (radius > 60) {
+      ctx.font = "700 12px 'Orbitron', monospace";
+      ctx.fillStyle = p.color;
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(p.name, px, py + radius + 22);
+    }
+  }
+  return radius >= H*0.42;
+}
+
+function drawShip(){
+  var sx = CX + shipX * (W*0.32);
+  var sy = H - 46;
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(shipX * 0.35);
+  // flame
+  var flick = 6 + Math.random()*8;
+  var fg = ctx.createLinearGradient(0, 14, 0, 14+flick);
+  fg.addColorStop(0, '#00f5ffcc');
+  fg.addColorStop(1, '#00f5ff00');
+  ctx.fillStyle = fg;
+  ctx.beginPath();
+  ctx.moveTo(-6, 14); ctx.lineTo(6, 14); ctx.lineTo(0, 14+flick); ctx.closePath();
+  ctx.fill();
+  // hull
+  ctx.fillStyle = '#e8f6ff';
+  ctx.shadowColor = '#00f5ff';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.moveTo(0, -20); ctx.lineTo(14, 14); ctx.lineTo(-14, 14); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#00f5ff';
+  ctx.beginPath();
+  ctx.arc(0, -2, 5, 0, Math.PI*2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
+var lastTs = null;
+function loop(ts){
+  if (arriving) return;
+  var dt = lastTs ? Math.min(ts - lastTs, 50) : 16;
+  lastTs = ts;
+
+  shipX += (steerTarget - shipX) * 0.06;
+
+  drawStarfield(dt);
+  var arrived = drawPlanet(PLANETS[planetIdx], dt);
+  drawShip();
+
+  if (arrived) {
+    doArrive();
+    return;
+  }
+  raf = requestAnimationFrame(loop);
+}
+
+function doArrive(){
+  arriving = true;
+  var p = PLANETS[planetIdx];
+  if (visited.indexOf(p.id) === -1) visited.push(p.id);
+  buildTrail();
+  document.getElementById('arrive-icon').textContent = p.icon;
+  document.getElementById('arrive-title').textContent = p.name;
+  document.getElementById('arrive-title').style.color = p.color;
+  var btn = document.getElementById('arrive-play');
+  btn.style.background = p.color + '22';
+  btn.style.border = '1.5px solid ' + p.color;
+  btn.style.color = p.color;
+  document.getElementById('arrive').classList.add('show');
+}
+
+document.getElementById('arrive-next').addEventListener('click', function(){
+  document.getElementById('arrive').classList.remove('show');
+  planetIdx = (planetIdx + 1) % PLANETS.length;
+  approach = 0;
+  arriving = false;
+  lastTs = null;
+  buildTrail();
+  raf = requestAnimationFrame(loop);
+});
+
+// steering
+document.addEventListener('keydown', function(e){
+  if (e.code === 'ArrowLeft') steerTarget = Math.max(-1, steerTarget - 0.34);
+  if (e.code === 'ArrowRight') steerTarget = Math.min(1, steerTarget + 0.34);
+});
+var dragging = false, dragStartX = 0, dragStartSteer = 0;
+cv.addEventListener('mousedown', function(e){ dragging = true; dragStartX = e.clientX; dragStartSteer = steerTarget; });
+window.addEventListener('mousemove', function(e){ if(!dragging) return; steerTarget = Math.max(-1, Math.min(1, dragStartSteer + (e.clientX - dragStartX)/120)); });
+window.addEventListener('mouseup', function(){ dragging = false; });
+cv.addEventListener('touchstart', function(e){ dragging = true; dragStartX = e.touches[0].clientX; dragStartSteer = steerTarget; }, {passive:true});
+cv.addEventListener('touchmove', function(e){ if(!dragging) return; steerTarget = Math.max(-1, Math.min(1, dragStartSteer + (e.touches[0].clientX - dragStartX)/120)); }, {passive:true});
+cv.addEventListener('touchend', function(){ dragging = false; });
+
+raf = requestAnimationFrame(loop);
+</script>
+</body>
+</html>

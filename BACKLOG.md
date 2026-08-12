@@ -13,6 +13,16 @@ lives only in chat history — if it's not here, treat it as not tracked.
 
 ## Open
 
+### F-015 · Spaceship game-select hub (replace the flat game grid)
+- **Status:** Backlog — standalone prototype exists, not wired into the real app
+- **Priority:** _unset — set when you triage_
+- **Acceptance:**
+  - [ ] Home screen's `game-grid` (currently a plain list of cards, `js/nav.js`) becomes a fly-between-planets hub: one planet per game, landing on it opens that game
+  - [ ] Still reachable/skippable quickly — a returning student shouldn't be forced to fly every single time to reach a game they already know they want
+  - [ ] Keeps XP/progress display working per game (currently shown on each game's own home screen, unaffected either way)
+  - [ ] Deep-link support: landing on a planet should open straight into that game's own home screen, not just the app's top-level home (needs a small addition — right now `nav.js`'s `navTo()` + each game's `enter_<id>` already do this together, so landing can call the same pair)
+- **Notes:** Prototype sent as a standalone demo (`space-hub.html`, not yet in the deployed app) — canvas-drawn pseudo-3D (glowing sphere that scales up as you "approach", radial starfield, steerable ship), no 3D library, so it's light enough to run anywhere. The prototype's "PLAY" button just links out to the live site since it has no Firebase login of its own; the real version would call straight into `navTo('<game>')` + `enter_<id>()` like the existing game-grid cards do. Worth deciding: full replacement of the grid, or an optional "fly there" mode alongside the quick grid for when time's short.
+
 ### F-014 · 拼音 RUNNER — T-Rex-style pinyin dodge game
 - **Status:** Backlog — draft, mechanic not yet chosen
 - **Priority:** _unset — set when you triage_
