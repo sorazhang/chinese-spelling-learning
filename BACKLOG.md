@@ -13,30 +13,6 @@ lives only in chat history — if it's not here, treat it as not tracked.
 
 ## Open
 
-### F-015 · Spaceship game-select hub (replace the flat game grid)
-- **Status:** Backlog — standalone prototype exists, not wired into the real app
-- **Priority:** _unset — set when you triage_
-- **Acceptance:**
-  - [ ] Home screen's `game-grid` (currently a plain list of cards, `js/nav.js`) becomes a fly-between-planets hub: one planet per game, landing on it opens that game
-  - [ ] Still reachable/skippable quickly — a returning student shouldn't be forced to fly every single time to reach a game they already know they want
-  - [ ] Keeps XP/progress display working per game (currently shown on each game's own home screen, unaffected either way)
-  - [ ] Deep-link support: landing on a planet should open straight into that game's own home screen, not just the app's top-level home (needs a small addition — right now `nav.js`'s `navTo()` + each game's `enter_<id>` already do this together, so landing can call the same pair)
-- **Notes:** Prototype sent as a standalone demo (`space-hub.html`, not yet in the deployed app) — canvas-drawn pseudo-3D (glowing sphere that scales up as you "approach", radial starfield, steerable ship), no 3D library, so it's light enough to run anywhere. The prototype's "PLAY" button just links out to the live site since it has no Firebase login of its own; the real version would call straight into `navTo('<game>')` + `enter_<id>()` like the existing game-grid cards do. Worth deciding: full replacement of the grid, or an optional "fly there" mode alongside the quick grid for when time's short.
-
-### F-014 · 拼音 RUNNER — T-Rex-style pinyin dodge game
-- **Status:** Backlog — draft, mechanic not yet chosen
-- **Priority:** _unset — set when you triage_
-- **Acceptance:**
-  - [ ] Chrome-dinosaur-style endless runner (single character/sprite auto-running left-to-right, jump on tap)
-  - [ ] Obstacles are shaped like the classic cactus but labeled with a pinyin syllable instead
-  - [ ] One of two mechanics below is picked and implemented (see Notes)
-  - [ ] Speed ramps up over time / distance like the original, for difficulty progression
-  - [ ] XP + a session log entry on run end, same pattern as the other 5 games
-- **Notes:** Two ways to make the obstacles actually test pinyin instead of just being reskinned cacti — needs a decision before building:
-  - **A — Target-match:** current vocab word (character or English meaning) shown at the top; obstacles carry random pinyin, jump only the ones that *don't* match the target, get hit by a matching one you failed to jump (or duck under the wrong ones — reverse framing also works). Closer to the original's pure-reflex feel.
-  - **B — Read-and-react:** no jump/no-jump choice, obstacle pinyin always has to be jumped, but landing triggers a flash of "was that 声调 right?" style micro-quiz on the syllable just cleared — reflexes now, recall right after.
-  - Needs its own vocab-set read (reuses `S.vocabSets`, no new data shape) and a canvas-based render loop closer to Wall's (`js/wall.js`) than Quest's — Wall is probably the better template to fork from.
-
 ### F-009 · Stroke order hints
 - **Status:** Backlog
 - **Priority:** P2
@@ -117,3 +93,21 @@ lives only in chat history — if it's not here, treat it as not tracked.
   - [x] Hosted on Vercel from the `main` branch
   - [x] `chinese-spelling-learning.com` DNS pointed at Vercel via Namecheap
   - [x] Firebase Authorized Domains updated for the custom domain
+
+### F-014 · 拼音 DINO — pinyin dodge game, 6th real game
+- **Status:** Done — `js/dino.js`
+- **Acceptance:**
+  - [x] Perspective ("3D road") endless runner, jump every cactus, obstacles labeled with pinyin instead of blank
+  - [x] Landed on mechanic B from the original draft: no jump/no-jump choice, every cactus must be jumped, the gold one matches the current target word for a score+XP bonus and picks a new target
+  - [x] Speed ramps with score for difficulty progression
+  - [x] XP (`floor(score/5)`) + high score + a session log entry, same pattern as Wall (`js/wall.js`)
+- **Notes:** Prototyped first as standalone `dino-pinyin.html` (flat 2D) and `dino-pinyin-3d.html` (the perspective version that shipped), both still in the repo unlinked from the app. Two real bugs were caught in testing before it shipped: a units mismatch made the first cactus-speed tuning ~6x too fast, and the jump-arc physics briefly had duplicate/conflicting integration code.
+
+### F-015 · Spaceship game-select hub — "Fly there" alternate navigation
+- **Status:** Done — `js/spacehub.js`
+- **Acceptance:**
+  - [x] Added as a second option alongside the flat grid (a "🚀 OR FLY THERE INSTEAD" button on the home screen), not a full replacement — a returning student can still just tap a card
+  - [x] One planet per entry in `nav.js`'s `GAMES` list (now includes Dino), using each game's real accent color
+  - [x] Landing on a planet actually launches that game for real (`navTo(id)` + `enter_<id>()`, the exact same call the flat grid's cards make) — the prototype's version only linked out to the homepage
+  - [x] Dodgeable asteroids with a 3-shield HUD; losing all shields resets the current approach rather than the whole journey
+- **Notes:** Prototyped first as standalone `space-hub.html`, still in the repo unlinked from the app. One real bug caught in testing before it shipped: the "have you arrived" check compared the planet's rendered radius against a threshold it could mathematically never reach, so the ship would fly forever and never land.

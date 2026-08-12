@@ -106,7 +106,7 @@ async function main() {
   await wireFakeBackend(studentPage, student, store);
   await studentPage.goto(baseUrl);
   await studentPage.waitForSelector('#view-home.active', { timeout: 10000 });
-  assert((await studentPage.locator('.game-card').count()) === 5, 'game grid shows all 5 games');
+  assert((await studentPage.locator('.game-card').count()) === 6, 'game grid shows all 6 games');
   await studentPage.click('.game-card:has-text("QUEST")');
   await studentPage.waitForSelector('#quest-home.active');
   await studentPage.click('#quest-home .btn-primary');
@@ -202,7 +202,29 @@ async function main() {
   await studentPage.evaluate(function() { window.dictBackToApp(); });
   await studentPage.waitForSelector('#view-home.active');
 
-  console.log('\n[7] Admin dashboard sees the student\'s progress + sessions across all 5 games');
+  console.log('\n[7] Student plays Dino until natural game-over (no jumps — first cactus ends the run)');
+  await studentPage.click('.game-card:has-text("DINO")');
+  await studentPage.waitForSelector('#dino-home.active');
+  await studentPage.click('#dino-home >> text=START RUN');
+  await studentPage.waitForSelector('#dino-game.active');
+  await studentPage.waitForSelector('#dino-over.active', { timeout: 8000 });
+  assert(store.progress['owen-uid']['c4_dino'] !== undefined, 'progress/owen-uid/c4_dino written after game over');
+  await studentPage.click('#dino-over >> text=HOME BASE');
+  await studentPage.waitForSelector('#view-home.active');
+
+  console.log('\n[8] Student flies the space hub and lands on a real game');
+  await studentPage.click('#home-student >> text=FLY THERE');
+  await studentPage.waitForSelector('#hub-fly.active');
+  await studentPage.waitForSelector('#hub-arrive.show', { timeout: 8000 });
+  var arrivedTitle = await studentPage.textContent('#hub-arrive-title');
+  assert(arrivedTitle.indexOf('QUEST') !== -1, 'ship lands on the first planet in GAMES order (Quest): got "' + arrivedTitle + '"');
+  await studentPage.click('#hub-arrive-play');
+  await studentPage.waitForSelector('#quest-home.active', { timeout: 3000 });
+  assert(true, 'landing on the planet actually launched Quest (navTo + enter_quest), not just a placeholder link');
+  await studentPage.click('#quest-home .back-btn');
+  await studentPage.waitForSelector('#view-home.active');
+
+  console.log('\n[9] Admin dashboard sees the student\'s progress + sessions across all 6 games');
   await adminPage.click('#home-admin .btn-primary');
   await adminPage.waitForSelector('#view-dashboard.active');
   await adminPage.waitForFunction(function() {
@@ -211,12 +233,12 @@ async function main() {
   var dashText = await adminPage.textContent('#dash-list');
   assert(dashText.includes('Owen'), 'dashboard student list shows "Owen"');
   var sessText = await adminPage.textContent('#dash-sessions');
-  for (var gi = 0; gi < ['quest', 'recall', 'wall', 'handwrite', 'dictation'].length; gi++) {
-    var gname = ['quest', 'recall', 'wall', 'handwrite', 'dictation'][gi];
+  for (var gi = 0; gi < ['quest', 'recall', 'wall', 'handwrite', 'dictation', 'dino'].length; gi++) {
+    var gname = ['quest', 'recall', 'wall', 'handwrite', 'dictation', 'dino'][gi];
     assert(sessText.includes(gname), 'dashboard session history shows a ' + gname + ' session');
   }
 
-  console.log('\n[8] Hostile checks — student page calls the database directly, bypassing all app UI');
+  console.log('\n[10] Hostile checks — student page calls the database directly, bypassing all app UI');
   var deniedWholeProgress = await studentPage.evaluate(function() {
     return window.firebase.database().ref('progress').once('value').then(function() { return 'ALLOWED'; }).catch(function(e) { return 'DENIED: ' + e.message; });
   });
@@ -242,7 +264,7 @@ async function main() {
   });
   assert(studentDeniedVocabWrite.startsWith('DENIED'), 'student writing vocabSets/c4 (admin-only content) is denied: ' + studentDeniedVocabWrite);
 
-  console.log('\n[9] No uncaught JS errors on either page across the whole run');
+  console.log('\n[11] No uncaught JS errors on either page across the whole run');
   assert(adminErrors.length === 0, 'admin page had no console/page errors' + (adminErrors.length ? ':\n    ' + adminErrors.join('\n    ') : ''));
   assert(studentErrors.length === 0, 'student page had no console/page errors' + (studentErrors.length ? ':\n    ' + studentErrors.join('\n    ') : ''));
 

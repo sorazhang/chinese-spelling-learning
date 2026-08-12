@@ -4,12 +4,16 @@ import { S } from './data.js';
 
 // One entry per ported game. Each game exposes window['enter_'+id]() to
 // build its home screen when navigated to; app.js wires that exposure.
+// `color` is each game's accent — used here for the grid, and by the
+// space hub (js/spacehub.js) for each planet, so there's one place that
+// defines a game's identity instead of two color lists drifting apart.
 export var GAMES = [
-  { id: 'quest', icon: '🎯', name: '汉字 QUEST', sub: 'flashcard quiz' },
-  { id: 'recall', icon: '📖', name: '段落 RECALL', sub: 'sentence builder' },
-  { id: 'wall', icon: '🧱', name: '汉字 WALL', sub: 'character shooter' },
-  { id: 'handwrite', icon: '✍️', name: '手写 TRACE', sub: 'handwriting + AI' },
-  { id: 'dictation', icon: '🔊', name: '听写 DICTATION', sub: 'audio + handwriting' }
+  { id: 'quest', icon: '🎯', name: '汉字 QUEST', sub: 'flashcard quiz', color: '#00f5ff' },
+  { id: 'recall', icon: '📖', name: '段落 RECALL', sub: 'sentence builder', color: '#8844ff' },
+  { id: 'wall', icon: '🧱', name: '汉字 WALL', sub: 'character shooter', color: '#ff6b35' },
+  { id: 'handwrite', icon: '✍️', name: '手写 TRACE', sub: 'handwriting + AI', color: '#22ffaa' },
+  { id: 'dictation', icon: '🔊', name: '听写 DICTATION', sub: 'audio + handwriting', color: '#ffa500' },
+  { id: 'dino', icon: '🦖', name: '拼音 DINO', sub: 'jump the pinyin', color: '#ffd700' }
 ];
 
 export function navTo(viewId) {

@@ -27,6 +27,8 @@ import {
   enterDictation, dictBackToApp, startDictation, clearAll, toggleEraseDict,
   speak, toggleHint, doCheck, grade, next as dictNext, initCanvas as initDictCanvas
 } from './dictation.js';
+import { enterDino, dinoBackToApp, startDinoRun, initCanvas as initDinoCanvas } from './dino.js';
+import { enterSpaceHub, spaceHubBackToApp, hubPlay, hubContinue, initCanvas as initHubCanvas } from './spacehub.js';
 import { enterDashboard, dashboardBackToApp } from './dashboard.js';
 
 function togglePinyin() {
@@ -86,6 +88,8 @@ function boot() {
   buildStars();
   initHwCanvas();
   initDictCanvas();
+  initDinoCanvas();
+  initHubCanvas();
 
   document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
@@ -154,7 +158,18 @@ Object.assign(window, {
   toggleHint: toggleHint,
   doCheck: doCheck,
   grade: grade,
-  next: dictNext
+  next: dictNext,
+
+  // Dino
+  enter_dino: enterDino,
+  dinoBackToApp: dinoBackToApp,
+  startDinoRun: startDinoRun,
+
+  // Space hub (alternate navigation)
+  enterSpaceHub: enterSpaceHub,
+  spaceHubBackToApp: spaceHubBackToApp,
+  hubPlay: hubPlay,
+  hubContinue: hubContinue
 });
 
 boot();

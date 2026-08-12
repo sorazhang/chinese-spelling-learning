@@ -38,6 +38,7 @@
 
   <div id="home-student">
     <div class="game-grid" id="game-grid"></div>
+    <button class="fly-btn" onclick="navTo('space-hub');enterSpaceHub()">🚀 OR FLY THERE INSTEAD</button>
   </div>
 
   <div id="home-admin" style="display:none">
@@ -386,6 +387,74 @@
     <button id="dict-next-btn" class="next-btn2" onclick="next()">NEXT WORD →</button>
   </div>
 
+</div>
+
+<!-- DINO GAME -->
+<div id="view-dino" class="view">
+
+  <div id="dino-home" class="screen active">
+    <div class="back-btn" onclick="dinoBackToApp()">
+      <span class="back-arrow">←</span>
+      <span class="back-label" style="color:#ffd700">拼音 DINO</span>
+    </div>
+    <div class="how-box">
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">👁️</span><span>Read the target word shown above the road</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🦖</span><span>Jump every cactus — tap, click, or press Space</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🥇</span><span>The gold cactus matches the target — clear it for a bonus</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">💥</span><span>Miss one and it's game over — how far can you get?</span></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div style="font-size:20px;margin-bottom:4px">🏆</div><div class="stat-num" id="dino-hi-val">0</div><div class="stat-lbl">BEST</div></div>
+      <div class="stat"><div style="font-size:20px;margin-bottom:4px">⚡</div><div class="stat-num" id="dino-xp-val">0</div><div class="stat-lbl">XP</div></div>
+      <div class="stat"><div style="font-size:20px;margin-bottom:4px">📖</div><div class="stat-num" id="dino-vocab-count">0</div><div class="stat-lbl">VOCAB</div></div>
+    </div>
+    <button class="btn-launch" onclick="startDinoRun()">▶ START RUN</button>
+  </div>
+
+  <div id="dino-game" class="screen">
+    <div id="dino-hud">SCORE&nbsp;<span id="dino-score-val" style="color:#00f5ff">0</span></div>
+    <div class="dino-target-box">
+      <div class="dino-target-lbl">FIND THE PINYIN FOR</div>
+      <div class="dino-target-char" id="dino-target-char"></div>
+      <div class="dino-target-en" id="dino-target-en"></div>
+    </div>
+    <canvas id="dino-cv" width="620" height="320"></canvas>
+    <div id="dino-toast"></div>
+    <div id="dino-hint">TAP, CLICK, OR PRESS SPACE TO JUMP</div>
+  </div>
+
+  <div id="dino-over" class="screen">
+    <div class="sum2-title" style="color:#ff4466">GAME OVER</div>
+    <div class="sum2-score" id="dino-over-score">0</div>
+    <div class="sum2-sub" id="dino-over-hi">BEST: 0</div>
+    <div class="sum2-xp" id="dino-over-xp"></div>
+    <button class="btn-primary" onclick="startDinoRun()">▶ PLAY AGAIN</button>
+    <button class="btn-secondary" onclick="dinoBackToApp()">← HOME BASE</button>
+  </div>
+
+</div>
+
+<!-- SPACE HUB (alternate navigation — fly to a game) -->
+<div id="view-space-hub" class="view">
+  <div id="hub-fly" class="screen active">
+    <div class="back-btn" onclick="spaceHubBackToApp()">
+      <span class="back-arrow">←</span>
+      <span class="back-label" style="color:#00f5ff">星际 HUB</span>
+    </div>
+    <div id="hub-lives"></div>
+    <canvas id="hub-cv" width="620" height="380"></canvas>
+    <div id="hub-toast"></div>
+    <div id="hub-trail"></div>
+    <div id="hub-hint">DRAG / ARROW KEYS TO STEER — DODGE THE ASTEROIDS ON THE WAY IN</div>
+  </div>
+</div>
+
+<div id="hub-arrive">
+  <div id="hub-arrive-icon"></div>
+  <div id="hub-arrive-title"></div>
+  <div class="hub-arrive-sub">ORBIT REACHED</div>
+  <button id="hub-arrive-play" onclick="hubPlay()">▶ PLAY THIS GAME</button>
+  <button id="hub-arrive-next" onclick="hubContinue()">🚀 CONTINUE JOURNEY</button>
 </div>
 
 <!-- DASHBOARD (admin) -->

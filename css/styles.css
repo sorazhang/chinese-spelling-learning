@@ -245,6 +245,37 @@ body{min-height:100vh;background:radial-gradient(ellipse at 25% 15%,#0b1d30,#050
 .hint-txt{text-align:center;font-size:16px;color:rgba(136,68,255,.8);letter-spacing:2px;margin-bottom:16px;min-height:24px}
 .word-num{text-align:center;font-size:11px;color:#44667a;margin-bottom:14px}
 
+/* ── Dino ── */
+.dino-target-box{background:rgba(255,215,0,.08);border:2px solid rgba(255,215,0,.5);border-radius:14px;padding:10px 14px;text-align:center;margin-bottom:10px}
+.dino-target-lbl{font-size:9px;color:#3a5568;letter-spacing:4px;margin-bottom:4px}
+.dino-target-char{font-family:serif;font-size:28px;color:#fff}
+.dino-target-en{font-size:11px;color:#ffd700;margin-top:2px}
+#dino-hud{display:flex;justify-content:center;font-family:'Orbitron',monospace;font-size:15px;color:#ff9900;margin-bottom:8px;letter-spacing:1px}
+#dino-cv{display:block;width:100%;background:#030710;border:2px solid rgba(255,153,0,.35);border-radius:12px;touch-action:none}
+#dino-toast{text-align:center;height:22px;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;margin-top:8px;transition:opacity .2s}
+#dino-hint{text-align:center;font-size:11px;color:#3a5568;margin-top:10px;letter-spacing:1px}
+
+/* ── Space Hub ── */
+#hub-lives{display:flex;justify-content:center;gap:8px;margin-bottom:8px}
+.life-icon{font-size:16px;filter:grayscale(1) opacity(.25);transition:filter .2s}
+.life-icon.on{filter:none}
+#hub-cv{display:block;width:100%;background:#010306;border:2px solid rgba(0,245,255,.3);border-radius:14px;touch-action:none}
+#hub-trail{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.trail-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.15);opacity:.4;transition:all .3s}
+.trail-dot.visited{opacity:1;box-shadow:0 0 12px currentColor}
+.trail-dot.current{opacity:1;transform:scale(1.2);box-shadow:0 0 16px currentColor}
+#hub-toast{text-align:center;height:20px;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:#ff4466;transition:opacity .2s;margin-top:8px}
+#hub-hint{text-align:center;font-size:11px;color:#3a5568;margin-top:10px;letter-spacing:1px}
+.fly-btn{display:block;width:100%;padding:14px;margin-top:12px;background:rgba(255,215,0,.06);border:1.5px solid rgba(255,215,0,.45);border-radius:14px;color:#ffd700;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:3px;cursor:pointer;text-align:center}
+
+#hub-arrive{position:fixed;inset:0;background:rgba(2,6,12,.92);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;z-index:50;padding:20px}
+#hub-arrive.show{display:flex}
+#hub-arrive-icon{font-size:56px}
+#hub-arrive-title{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;letter-spacing:2px}
+.hub-arrive-sub{font-size:12px;color:#5577aa;letter-spacing:2px}
+#hub-arrive-play{margin-top:8px;padding:15px 34px;border-radius:14px;font-family:'Orbitron',monospace;font-size:14px;font-weight:900;letter-spacing:3px;cursor:pointer}
+#hub-arrive-next{padding:11px 26px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:13px;color:#44667a;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;cursor:pointer}
+
 /* ── dashboard (teacher) ── */
 .dash-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;margin-bottom:8px}
 .dash-name{font-family:'Orbitron',monospace;font-size:12px;color:#cce0ee;flex:1}
