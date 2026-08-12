@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="dark"/>
+<title>拼音 DINO 3D – jump the cactus!</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Exo+2:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#0d1a28,#030912 55%,#010306);color:#fff;font-family:'Exo 2',sans-serif;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.star{position:fixed;border-radius:50%;background:#fff;pointer-events:none;animation:tw var(--d) var(--dl) ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.1}50%{opacity:.75}}
+@keyframes glow{0%,100%{text-shadow:0 0 10px currentColor}50%{text-shadow:0 0 26px currentColor}}
+
+.wrap{width:100%;max-width:640px;padding:16px}
+#title{font-family:'Orbitron',monospace;font-size:clamp(20px,5.5vw,30px);font-weight:900;color:#00f5ff;letter-spacing:3px;text-align:center;animation:glow 2.5s ease-in-out infinite;margin-bottom:2px}
+#sub{text-align:center;font-size:10px;color:#3a5568;letter-spacing:4px;margin-bottom:12px}
+
+#target-box{background:rgba(0,245,255,.08);border:2px solid rgba(0,245,255,.5);border-radius:14px;padding:10px 14px;text-align:center;margin-bottom:10px}
+#target-lbl{font-size:9px;color:#3a5568;letter-spacing:4px;margin-bottom:4px}
+#target-char{font-family:serif;font-size:26px;color:#fff}
+#target-en{font-size:11px;color:#00cfff;margin-top:2px}
+
+#hud{display:flex;justify-content:space-between;font-family:'Orbitron',monospace;font-size:13px;color:#ff9900;margin-bottom:6px;letter-spacing:1px}
+
+canvas{display:block;width:100%;background:#030710;border:2px solid rgba(255,153,0,.35);border-radius:12px;touch-action:none}
+
+#toast{text-align:center;height:22px;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;margin-top:8px;transition:opacity .2s}
+#hint{text-align:center;font-size:11px;color:#3a5568;margin-top:10px;letter-spacing:1px}
+
+#overlay{position:fixed;inset:0;background:rgba(2,6,12,.88);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center;z-index:50}
+#overlay.show{display:flex}
+#over-title{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;color:#ff4466;text-shadow:0 0 20px #ff4466}
+#over-score{font-family:'Orbitron',monospace;font-size:56px;font-weight:900;color:#00f5ff;text-shadow:0 0 28px #00f5ff}
+#over-hi{font-size:12px;color:#ffd700;letter-spacing:2px}
+#over-btn{margin-top:10px;padding:14px 32px;background:rgba(0,245,255,.1);border:1.5px solid #00f5ff;border-radius:14px;color:#00f5ff;font-family:'Orbitron',monospace;font-size:14px;font-weight:700;letter-spacing:3px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div id="title">拼音 DINO · 3D</div>
+  <div id="sub">JUMP EVERY CACTUS AS IT RUSHES AT YOU</div>
+
+  <div id="target-box">
+    <div id="target-lbl">FIND THE PINYIN FOR</div>
+    <div id="target-char"></div>
+    <div id="target-en"></div>
+  </div>
+
+  <div id="hud">
+    <span>SCORE <span id="score-val">0</span></span>
+    <span>BEST <span id="hi-val">0</span></span>
+  </div>
+
+  <canvas id="cv" width="620" height="320"></canvas>
+
+  <div id="toast"></div>
+  <div id="hint">TAP, CLICK, OR PRESS SPACE TO JUMP</div>
+</div>
+
+<div id="overlay">
+  <div id="over-title">GAME OVER</div>
+  <div id="over-score">0</div>
+  <div id="over-hi">BEST: 0</div>
+  <div id="over-btn">▶ PLAY AGAIN</div>
+</div>
+
+<script>
+var VOCAB = [
+  {char:"环保袋",py:"huánbǎodài",en:"eco / reusable bag"},
+  {char:"组屋楼下",py:"zǔwūlóuxià",en:"downstairs of the flat"},
+  {char:"停车场",py:"tíngchēchǎng",en:"car park"},
+  {char:"几辆汽车",py:"jǐliàngqìchē",en:"several cars"},
+  {char:"灯一直亮着",py:"dēngyìzhíliàngzhe",en:"lights kept on"},
+  {char:"所以",py:"suǒyǐ",en:"therefore / so"},
+  {char:"一张纸",py:"yìzhāngzhǐ",en:"a piece of paper"},
+  {char:"日用品",py:"rìyòngpǐn",en:"daily necessities"},
+  {char:"认为",py:"rènwéi",en:"to think / believe"},
+  {char:"责任感",py:"zérèngǎn",en:"sense of responsibility"}
+];
+
+function buildStars(){for(var i=0;i<70;i++){var s=document.createElement('div');s.className='star';s.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;width:'+(Math.random()*1.6+.3)+'px;height:'+(Math.random()*1.6+.3)+'px;--d:'+(Math.random()*3+2)+'s;--dl:'+(Math.random()*6)+'s';document.body.appendChild(s);}}
+buildStars();
+
+var cv = document.getElementById('cv');
+var ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var CX = W/2;
+var HORIZON = H*0.30;     // vanishing point height
+var CAMERA_Y = H*0.90;    // where the dino stands (near edge of the "road")
+
+var hi = 0;
+try { hi = parseInt(localStorage.getItem('dino_pinyin3d_hi')) || 0; } catch(e) {}
+document.getElementById('hi-val').textContent = hi;
+
+var dino, cacti, target, score, spawnCd, pRate, running, raf, lastTs;
+
+function rnd(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function pickTarget(exclChar){
+  var cands = VOCAB.filter(function(v){ return v.char !== exclChar; });
+  target = rnd(cands.length ? cands : VOCAB);
+  document.getElementById('target-char').textContent = target.char;
+  document.getElementById('target-en').textContent = target.en.toUpperCase();
+}
+
+function toast(msg, color){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.color = color;
+  t.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(function(){ t.style.opacity = '0'; }, 700);
+}
+
+// perspective helpers: p = 0 (far, at horizon) .. 1 (at the dino)
+function scaleAt(p){ return 0.06 + p*p*1.15; }
+function yAt(p){ return HORIZON + (CAMERA_Y - HORIZON) * p; }
+function xAt(p, lane){ return CX + lane * 150 * p; }
+
+var GRAVITY = 0.0034;   // px per ms^2
+var JUMP_V = -0.95;     // px per ms (negative = up)
+var CLEAR_HEIGHT = 46;  // px of jump needed to clear a cactus at the camera plane
+
+function reset(){
+  dino = { vy: 0, jumping: false, frame: 0, jumpPx: 0 };
+  cacti = [];
+  score = 0;
+  pRate = 0.0028;
+  spawnCd = 55;
+  running = true;
+  lastTs = null;
+  pickTarget(null);
+  document.getElementById('score-val').textContent = 0;
+  document.getElementById('overlay').classList.remove('show');
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(loop);
+}
+
+function jump(){
+  if (!running) { reset(); return; }
+  if (!dino.jumping) {
+    dino.jumping = true;
+    dino.vy = JUMP_V;
+  }
+}
+
+function spawnCactus(){
+  var isTarget = Math.random() < 0.35;
+  var data = isTarget ? target : rnd(VOCAB.filter(function(v){ return v.char !== target.char; }));
+  cacti.push({
+    p: 0,
+    lane: (Math.random() - 0.5) * 0.55,   // small visual wobble, not a real dodge lane
+    h: 34 + Math.random()*18,
+    py: data.py,
+    isTarget: isTarget && data.char === target.char,
+    resolved: false
+  });
+}
+
+function drawSky(){
+  var g = ctx.createLinearGradient(0,0,0,HORIZON);
+  g.addColorStop(0, '#030710');
+  g.addColorStop(1, '#0b1930');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,HORIZON);
+
+  // distant twin moons for depth
+  ctx.fillStyle = 'rgba(0,245,255,.5)';
+  ctx.beginPath(); ctx.arc(W*0.18, HORIZON*0.4, 10, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,153,0,.4)';
+  ctx.beginPath(); ctx.arc(W*0.85, HORIZON*0.55, 15, 0, Math.PI*2); ctx.fill();
+}
+
+function drawGround(dt, tOffset){
+  var g = ctx.createLinearGradient(0,HORIZON,0,H);
+  g.addColorStop(0, '#0a1524');
+  g.addColorStop(1, '#050a14');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, HORIZON, W, H-HORIZON);
+
+  // converging lane lines (road edges + center)
+  ctx.strokeStyle = 'rgba(255,153,0,.4)';
+  ctx.lineWidth = 1.4;
+  [-1, -0.4, 0, 0.4, 1].forEach(function(lane){
+    ctx.beginPath();
+    ctx.moveTo(CX, HORIZON);
+    ctx.lineTo(xAt(1, lane*2.6), CAMERA_Y + 30);
+    ctx.stroke();
+  });
+
+  // horizontal rungs, denser near the horizon (perspective)
+  ctx.strokeStyle = 'rgba(255,153,0,.18)';
+  for (var i = 1; i <= 10; i++) {
+    var p = (i/10);
+    var p2 = p*p; // bunch rungs up near horizon
+    var y = yAt(p2);
+    var half = 150 * p2;
+    ctx.beginPath();
+    ctx.moveTo(CX - half, y);
+    ctx.lineTo(CX + half, y);
+    ctx.stroke();
+  }
+}
+
+function drawShadow(px, py, scale, jumpH){
+  var alpha = Math.max(0.08, 0.35 - jumpH*0.6);
+  ctx.fillStyle = 'rgba(0,0,0,' + alpha + ')';
+  ctx.beginPath();
+  ctx.ellipse(px, py, 16*scale*(1-jumpH*0.4), 6*scale*(1-jumpH*0.4), 0, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawDino(){
+  var scale = scaleAt(1) * 1.05;
+  var groundY = yAt(1);
+  var jumpFrac = Math.min(1, dino.jumpPx / 130);
+  var px = CX, py = groundY - dino.jumpPx;
+
+  drawShadow(px, groundY + 4, scale, jumpFrac);
+
+  var w = 44*scale, h = 46*scale;
+  ctx.save();
+  ctx.translate(px, py);
+
+  // side face (darker) for a boxy 3D read
+  ctx.fillStyle = '#0090a8';
+  ctx.beginPath();
+  ctx.moveTo(w*0.16, -h*0.85); ctx.lineTo(w*0.42, -h*0.7); ctx.lineTo(w*0.42, -h*0.1); ctx.lineTo(w*0.16, -h*0.25);
+  ctx.closePath(); ctx.fill();
+
+  // top/front face (bright)
+  ctx.fillStyle = '#00f5ff';
+  ctx.shadowColor = '#00f5ff';
+  ctx.shadowBlur = 10;
+  ctx.fillRect(-w*0.3, -h*0.85, w*0.5, h*0.62);
+  ctx.fillRect(-w*0.1, -h, w*0.42, h*0.35);
+  ctx.shadowBlur = 0;
+
+  // eye
+  ctx.fillStyle = '#030912';
+  ctx.fillRect(w*0.16, -h*0.92, 4, 4);
+
+  // legs
+  var legOffset = dino.jumping ? 0 : (Math.sin(dino.frame) > 0 ? 5 : -5);
+  ctx.fillStyle = '#009cb5';
+  ctx.fillRect(-w*0.22 + legOffset*0.3, -h*0.24, 8, h*0.28);
+  ctx.fillRect(w*0.02 - legOffset*0.3, -h*0.24, 8, h*0.28);
+
+  ctx.restore();
+}
+
+function drawCactus(c){
+  var scale = scaleAt(c.p);
+  var px = xAt(c.p, c.lane);
+  var py = yAt(c.p);
+  var w = 20*scale, h = c.h*scale;
+  var color = c.isTarget ? '#ffd700' : '#ff6b35';
+
+  drawShadow(px, py + 2, scale, 0);
+
+  ctx.save();
+  ctx.translate(px, py);
+
+  // side face (darker, gives it a 3D column look)
+  ctx.fillStyle = c.isTarget ? '#b89200' : '#b0451f';
+  ctx.fillRect(w*0.15, -h, w*0.35, h);
+
+  // front face
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 6*scale;
+  ctx.fillRect(-w*0.35, -h, w*0.5, h);
+  ctx.fillRect(-w*0.6, -h*0.7, w*0.3, h*0.4);
+  ctx.fillRect(w*0.15, -h*0.55, w*0.3, h*0.35);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  if (scale > 0.28) {
+    ctx.font = (10*Math.min(scale,1.15)) + "px 'Exo 2', sans-serif";
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText(c.py, px, py - h - 6);
+  }
+}
+
+function loop(ts){
+  if (!running) return;
+  var dt = lastTs ? Math.min(ts - lastTs, 50) : 16;
+  lastTs = ts;
+
+  // dino jump arc (real pixel physics: vy in px/ms, gravity in px/ms^2)
+  if (dino.jumping) {
+    dino.vy += GRAVITY * dt;
+    dino.jumpPx -= dino.vy * dt;
+    if (dino.jumpPx <= 0) { dino.jumpPx = 0; dino.jumping = false; dino.vy = 0; }
+  }
+  dino.frame += 0.2;
+
+  ctx.clearRect(0,0,W,H);
+  drawSky();
+  drawGround(dt);
+
+  // spawn
+  spawnCd -= 1;
+  if (spawnCd <= 0) {
+    spawnCactus();
+    spawnCd = Math.max(30, 70 - score*0.05);
+  }
+
+  // advance + collide + draw (draw far-to-near so near ones overlap far ones correctly)
+  cacti.sort(function(a,b){ return a.p - b.p; });
+  for (var i = 0; i < cacti.length; i++) {
+    var c = cacti[i];
+    c.p += pRate * dt;
+    drawCactus(c);
+
+    if (!c.resolved && c.p >= 0.97) {
+      var cleared = dino.jumpPx > CLEAR_HEIGHT;
+      if (!cleared) { gameOver(); return; }
+      c.resolved = true;
+      score += 10;
+      if (c.isTarget) {
+        score += 50;
+        toast('✅ ' + c.py + ' — MATCH! +50', '#00ff88');
+        pickTarget(target.char);
+      } else {
+        toast(c.py, '#7799aa');
+      }
+      document.getElementById('score-val').textContent = score;
+    }
+  }
+  cacti = cacti.filter(function(c){ return c.p < 1.15; });
+
+  drawDino();
+
+  pRate = Math.min(0.0075, 0.0028 + score * 0.000006);
+
+  raf = requestAnimationFrame(loop);
+}
+
+function gameOver(){
+  running = false;
+  cancelAnimationFrame(raf);
+  if (score > hi) {
+    hi = score;
+    try { localStorage.setItem('dino_pinyin3d_hi', hi); } catch(e) {}
+  }
+  document.getElementById('hi-val').textContent = hi;
+  document.getElementById('over-score').textContent = score;
+  document.getElementById('over-hi').textContent = 'BEST: ' + hi;
+  document.getElementById('overlay').classList.add('show');
+}
+
+document.addEventListener('keydown', function(e){
+  if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
+});
+cv.addEventListener('mousedown', jump);
+cv.addEventListener('touchstart', function(e){ e.preventDefault(); jump(); }, { passive: false });
+document.getElementById('overlay').addEventListener('click', function(){ if(!running) reset(); });
+
+reset();
+</script>
+</body>
+</html>
