@@ -18,12 +18,17 @@ body{background:#010306;color:#fff;font-family:'Exo 2',sans-serif;overflow:hidde
 
 canvas{display:block;width:100%;background:#010306;border:2px solid rgba(0,245,255,.3);border-radius:14px;touch-action:none}
 
+#lives{display:flex;justify-content:center;gap:8px;margin-bottom:8px}
+.life-icon{font-size:16px;filter:grayscale(1) opacity(.25);transition:filter .2s}
+.life-icon.on{filter:none}
+
 #trail{display:flex;justify-content:center;gap:10px;margin-top:10px}
 .trail-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.15);opacity:.4;transition:all .3s}
 .trail-dot.visited{opacity:1;box-shadow:0 0 12px currentColor}
 .trail-dot.current{opacity:1;transform:scale(1.2);box-shadow:0 0 16px currentColor}
 
 #hint{text-align:center;font-size:11px;color:#3a5568;margin-top:10px;letter-spacing:1px}
+#ast-toast{text-align:center;height:20px;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:#ff4466;transition:opacity .2s}
 
 #arrive{position:fixed;inset:0;background:rgba(2,6,12,.92);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;z-index:50;padding:20px}
 #arrive.show{display:flex}
@@ -39,9 +44,11 @@ canvas{display:block;width:100%;background:#010306;border:2px solid rgba(0,245,2
 <div class="wrap">
   <div id="title">星际 HUB</div>
   <div id="sub">FLY THROUGH SPACE · LAND ON A GAME</div>
+  <div id="lives"></div>
   <canvas id="cv" width="620" height="380"></canvas>
+  <div id="ast-toast"></div>
   <div id="trail"></div>
-  <div id="hint">DRAG / ARROW KEYS TO STEER — YOUR SHIP FLIES FORWARD ON ITS OWN</div>
+  <div id="hint">DRAG / ARROW KEYS TO STEER — DODGE THE ASTEROIDS ON THE WAY IN</div>
 </div>
 
 <div id="arrive">
@@ -74,6 +81,32 @@ var stars = [];
 var visited = [];
 var arriving = false;
 var raf;
+
+var LIVES_MAX = 3;
+var lives = LIVES_MAX;
+var asteroids = [];
+var astSpawnCd = 900;
+var hitFlashMs = 0;
+
+function buildLives(){
+  var el = document.getElementById('lives');
+  el.innerHTML = '';
+  for (var i = 0; i < LIVES_MAX; i++) {
+    var d = document.createElement('span');
+    d.className = 'life-icon' + (i < lives ? ' on' : '');
+    d.textContent = '🛡️';
+    el.appendChild(d);
+  }
+}
+buildLives();
+
+function astToast(msg){
+  var t = document.getElementById('ast-toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(astToast._t);
+  astToast._t = setTimeout(function(){ t.style.opacity = '0'; }, 900);
+}
 
 for (var i = 0; i < 140; i++) {
   stars.push({ a: Math.random()*Math.PI*2, r: Math.random()*260, speed: 0.6 + Math.random()*1.8 });
@@ -150,6 +183,90 @@ function drawPlanet(p, dt){
   return approach >= 0.985;
 }
 
+var ASTEROID_RATE = 0.0005; // depth progress per ms — ~2s horizon-to-ship transit
+var SHIP_Y = H - 46;
+
+function astScale(p){ return 0.12 + p*p*1.05; }
+function astX(p, lane){ return CX + lane * (W*0.32) * p; }
+function astY(p){ return HORIZON + (SHIP_Y - HORIZON) * p; }
+
+function spawnAsteroid(){
+  var jitter = [];
+  for (var i = 0; i < 8; i++) jitter.push(0.7 + Math.random()*0.45);
+  asteroids.push({
+    p: 0,
+    lane: (Math.random()*2 - 1) * 0.9,
+    size: 13 + Math.random()*9,
+    rot: Math.random()*Math.PI*2,
+    spin: (Math.random()-0.5)*0.0035,
+    jitter: jitter,
+    resolved: false
+  });
+}
+
+function drawAsteroid(a){
+  var scale = astScale(a.p);
+  var px = astX(a.p, a.lane);
+  var py = astY(a.p);
+  var r = a.size * scale;
+  a.rot += a.spin * 16;
+
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(a.rot);
+  ctx.fillStyle = '#5a4636';
+  ctx.strokeStyle = '#a88a68';
+  ctx.lineWidth = Math.max(0.6, r*0.05);
+  ctx.beginPath();
+  for (var i = 0; i < a.jitter.length; i++) {
+    var ang = (i/a.jitter.length) * Math.PI*2;
+    var rr = r * a.jitter[i];
+    var x = Math.cos(ang)*rr, y = Math.sin(ang)*rr;
+    if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function updateAsteroids(dt, shipScreenX){
+  astSpawnCd -= dt;
+  if (astSpawnCd <= 0) {
+    spawnAsteroid();
+    astSpawnCd = 700 + Math.random()*700;
+  }
+
+  for (var i = asteroids.length - 1; i >= 0; i--) {
+    var a = asteroids[i];
+    a.p += ASTEROID_RATE * dt;
+    drawAsteroid(a);
+
+    if (!a.resolved && a.p >= 0.95) {
+      a.resolved = true;
+      var hitRadius = a.size*astScale(a.p)*0.7 + 15;
+      if (Math.abs(astX(a.p, a.lane) - shipScreenX) < hitRadius) {
+        lives = Math.max(0, lives - 1);
+        buildLives();
+        hitFlashMs = 220;
+        astToast('💥 HIT! shield ' + lives + '/' + LIVES_MAX);
+        if (lives === 0) {
+          setTimeout(function(){
+            if (arriving) return; // don't stomp an in-progress planet arrival
+            lives = LIVES_MAX;
+            approach = 0;
+            asteroids = [];
+            buildLives();
+            astToast('🛠️ SHIELDS RESTORED — RE-APPROACHING');
+          }, 260);
+        }
+      }
+    }
+
+    if (a.p > 1.2) asteroids.splice(i, 1);
+  }
+}
+
 function drawShip(){
   var sx = CX + shipX * (W*0.32);
   var sy = H - 46;
@@ -187,10 +304,18 @@ function loop(ts){
   lastTs = ts;
 
   shipX += (steerTarget - shipX) * 0.06;
+  var shipScreenX = CX + shipX * (W*0.32);
 
   drawStarfield(dt);
   var arrived = drawPlanet(PLANETS[planetIdx], dt);
+  updateAsteroids(dt, shipScreenX);
   drawShip();
+
+  if (hitFlashMs > 0) {
+    hitFlashMs -= dt;
+    ctx.fillStyle = 'rgba(255,30,60,' + Math.max(0, hitFlashMs/220*0.35) + ')';
+    ctx.fillRect(0, 0, W, H);
+  }
 
   if (arrived) {
     doArrive();
@@ -218,6 +343,8 @@ document.getElementById('arrive-next').addEventListener('click', function(){
   document.getElementById('arrive').classList.remove('show');
   planetIdx = (planetIdx + 1) % PLANETS.length;
   approach = 0;
+  asteroids = [];
+  astSpawnCd = 900;
   arriving = false;
   lastTs = null;
   buildTrail();
