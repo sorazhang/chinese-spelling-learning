@@ -128,7 +128,7 @@ function reset(){
   dino = { vy: 0, jumping: false, frame: 0, jumpPx: 0 };
   cacti = [];
   score = 0;
-  pRate = 0.0028;
+  pRate = 0.00045;
   spawnCd = 55;
   running = true;
   lastTs = null;
@@ -336,7 +336,7 @@ function loop(ts){
 
   drawDino();
 
-  pRate = Math.min(0.0075, 0.0028 + score * 0.000006);
+  pRate = Math.min(0.0011, 0.00045 + score * 0.000001);
 
   raf = requestAnimationFrame(loop);
 }

@@ -147,7 +147,7 @@ function drawPlanet(p, dt){
       ctx.fillText(p.name, px, py + radius + 22);
     }
   }
-  return radius >= H*0.42;
+  return approach >= 0.985;
 }
 
 function drawShip(){
