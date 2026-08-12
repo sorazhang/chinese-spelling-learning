@@ -13,6 +13,20 @@ lives only in chat history — if it's not here, treat it as not tracked.
 
 ## Open
 
+### F-014 · 拼音 RUNNER — T-Rex-style pinyin dodge game
+- **Status:** Backlog — draft, mechanic not yet chosen
+- **Priority:** _unset — set when you triage_
+- **Acceptance:**
+  - [ ] Chrome-dinosaur-style endless runner (single character/sprite auto-running left-to-right, jump on tap)
+  - [ ] Obstacles are shaped like the classic cactus but labeled with a pinyin syllable instead
+  - [ ] One of two mechanics below is picked and implemented (see Notes)
+  - [ ] Speed ramps up over time / distance like the original, for difficulty progression
+  - [ ] XP + a session log entry on run end, same pattern as the other 5 games
+- **Notes:** Two ways to make the obstacles actually test pinyin instead of just being reskinned cacti — needs a decision before building:
+  - **A — Target-match:** current vocab word (character or English meaning) shown at the top; obstacles carry random pinyin, jump only the ones that *don't* match the target, get hit by a matching one you failed to jump (or duck under the wrong ones — reverse framing also works). Closer to the original's pure-reflex feel.
+  - **B — Read-and-react:** no jump/no-jump choice, obstacle pinyin always has to be jumped, but landing triggers a flash of "was that 声调 right?" style micro-quiz on the syllable just cleared — reflexes now, recall right after.
+  - Needs its own vocab-set read (reuses `S.vocabSets`, no new data shape) and a canvas-based render loop closer to Wall's (`js/wall.js`) than Quest's — Wall is probably the better template to fork from.
+
 ### F-009 · Stroke order hints
 - **Status:** Backlog
 - **Priority:** P2
