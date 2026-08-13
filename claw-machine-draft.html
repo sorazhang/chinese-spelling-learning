@@ -108,7 +108,8 @@ body{min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#1a1030,#0a05
       <div id="mic-status">Tap the mic and say the word</div>
       <div id="transcript-box"></div>
     </div>
-    <div class="self-grade-row" id="self-grade-row" style="display:none">
+    <div style="font-size:9px;color:#5a3a6a;text-align:center;margin-top:14px;letter-spacing:2px">OR SELF-GRADE — ALWAYS WORKS, MIC OR NOT</div>
+    <div class="self-grade-row" id="self-grade-row">
       <button class="sg-btn" onclick="selfGrade('correct')" style="border:1px solid #00ff8855;color:#00ff88">✅ Got it</button>
       <button class="sg-btn" onclick="selfGrade('partial')" style="border:1px solid #ffcc0055;color:#ffcc00">💪 Almost</button>
       <button class="sg-btn" onclick="selfGrade('incorrect')" style="border:1px solid #ff446655;color:#ff4466">❌ Not yet</button>
@@ -229,18 +230,20 @@ function drawCabinet(){
   for (var i = 0; i < pile.length; i++) {
     var t = pile[i];
     if (t.caught) continue;
-    ctx.fillStyle = 'rgba(255,255,255,.06)';
+    // face-down — the catch is a surprise, not a pick; the word only
+    // reveals once it's actually in the claw (see onCaught)
+    ctx.fillStyle = 'rgba(255,68,170,.1)';
     ctx.beginPath();
     ctx.roundRect ? ctx.roundRect(t.x-26, t.y-16, 52, 32, 8) : ctx.rect(t.x-26, t.y-16, 52, 32);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,68,170,.4)';
+    ctx.strokeStyle = 'rgba(255,68,170,.45)';
     ctx.lineWidth = 1.4;
     ctx.stroke();
-    ctx.font = "18px serif";
-    ctx.fillStyle = '#fff';
+    ctx.font = "700 15px 'Orbitron', monospace";
+    ctx.fillStyle = 'rgba(255,68,170,.65)';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(t.item.char.slice(0,2), t.x, t.y);
+    ctx.fillText('?', t.x, t.y);
   }
 }
 
@@ -264,10 +267,11 @@ function drawClaw(){
   ctx.restore();
 
   if (caughtTile) {
-    ctx.font = "16px serif";
-    ctx.fillStyle = '#fff';
+    // still face-down on the way up — revealed only on the speak screen
+    ctx.font = "700 13px 'Orbitron', monospace";
+    ctx.fillStyle = 'rgba(255,68,170,.8)';
     ctx.textAlign = 'center';
-    ctx.fillText(caughtTile.item.char.slice(0,2), clawX, clawY + 24);
+    ctx.fillText('?', clawX, clawY + 24);
   }
 }
 
@@ -318,7 +322,6 @@ function onCaught(tile){
   document.getElementById('transcript-box').textContent = '';
   document.getElementById('mic-status').textContent = 'Tap the mic and say the word';
   document.getElementById('mic-btn').classList.remove('listening');
-  document.getElementById('self-grade-row').style.display = 'none';
   document.getElementById('feedback-card').style.display = 'none';
   document.getElementById('next-btn').style.display = 'none';
   currentTile = tile;
@@ -341,10 +344,11 @@ document.getElementById('drop-btn').addEventListener('click', function(){
 var currentTile = null;
 var SpeechCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
 
+var micTimeout = null;
+
 function startListening(){
   if (!SpeechCtor) {
     document.getElementById('mic-status').textContent = 'Speech recognition not available on this device — use self-grade below';
-    document.getElementById('self-grade-row').style.display = 'flex';
     return;
   }
   var rec = new SpeechCtor();
@@ -353,22 +357,42 @@ function startListening(){
   rec.maxAlternatives = 1;
   document.getElementById('mic-btn').classList.add('listening');
   document.getElementById('mic-status').textContent = 'Listening...';
+
+  var settled = false;
+  function settle(){
+    settled = true;
+    clearTimeout(micTimeout);
+    document.getElementById('mic-btn').classList.remove('listening');
+  }
+
+  // Some sandboxed environments (including this preview) never fire
+  // onresult or onerror at all if the mic permission prompt is blocked
+  // outright — without this, the button would just spin forever.
+  micTimeout = setTimeout(function(){
+    if (settled) return;
+    settle();
+    try { rec.abort(); } catch (e) {}
+    document.getElementById('mic-status').textContent = "Didn't hear anything back — use self-grade below";
+  }, 6000);
+
   rec.onresult = function(e){
+    if (settled) return;
+    settle();
     var transcript = e.results[0][0].transcript;
     document.getElementById('transcript-box').textContent = '"' + transcript + '"';
     gradeTranscript(transcript);
   };
   rec.onerror = function(e){
-    document.getElementById('mic-btn').classList.remove('listening');
+    if (settled) return;
+    settle();
     document.getElementById('mic-status').textContent = 'Could not hear you (' + e.error + ') — use self-grade below';
-    document.getElementById('self-grade-row').style.display = 'flex';
   };
   rec.onend = function(){
     document.getElementById('mic-btn').classList.remove('listening');
   };
   try { rec.start(); } catch (err) {
+    settle();
     document.getElementById('mic-status').textContent = 'Could not start microphone — use self-grade below';
-    document.getElementById('self-grade-row').style.display = 'flex';
   }
 }
 
