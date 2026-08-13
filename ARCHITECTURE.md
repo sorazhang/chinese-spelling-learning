@@ -129,23 +129,33 @@ different one.
 
 ## 7. AI grading: server-side proxy, not a client-side API key
 
-Handwrite and Dictation both grade a photo of the student's handwriting
-via the Anthropic Messages API. The client **never** calls
-`api.anthropic.com` directly and never holds a real API key — both
-`js/handwrite.js` and `js/dictation.js` `fetch('/api/grade', {...})`
-instead, a same-origin Vercel serverless function (`api/grade.js`) that
-reads `ANTHROPIC_API_KEY` from a server-side environment variable and
-proxies the request. A real key embedded in shipped browser JS would be
-extractable via view-source by any visitor and usable to run up charges on
-whoever's account it belongs to — this is the one place in the app where
-"no custom server" (§1) still gets a one-file serverless exception, because
-the alternative is a leaked credential.
+Handwrite, Dictation, and Claw each grade something via the Anthropic
+Messages API. The client **never** calls `api.anthropic.com` directly and
+never holds a real API key — `js/handwrite.js`, `js/dictation.js`, and
+`js/claw.js` all `fetch('/api/grade', {...})` instead, a same-origin
+Vercel serverless function (`api/grade.js`) that reads `ANTHROPIC_API_KEY`
+from a server-side environment variable and proxies the request. A real
+key embedded in shipped browser JS would be extractable via view-source
+by any visitor and usable to run up charges on whoever's account it
+belongs to — this is the one place in the app where "no custom server"
+(§1) still gets a one-file serverless exception, because the alternative
+is a leaked credential.
 
-Both games are written to degrade gracefully: if `/api/grade` errors for
-any reason (key not configured yet, network failure, malformed response),
-they fall back to the existing manual self-grade buttons rather than
-blocking play. See §9 for the Vercel environment variable setup this
-still needs.
+`api/grade.js` accepts two request shapes: `{image, prompt}` for a photo
+of handwriting (Handwrite, Dictation), or `{prompt}` alone for text-only
+grading — Claw sends a Web Speech API transcript plus the target word
+instead of an image, since there's nothing to photograph for a
+pronunciation check.
+
+Every AI-graded game is written to degrade gracefully: if `/api/grade`
+errors for any reason (key not configured yet, network failure, malformed
+response, or — for Claw specifically — speech recognition itself being
+unsupported or never responding), it falls back to the existing manual
+self-grade buttons rather than blocking play. Claw goes a step further and
+keeps those buttons visible from the start rather than only revealing them
+on failure, since mic/speech support varies far more across browsers and
+devices than canvas drawing does. See §9 for the Vercel environment
+variable setup this still needs.
 
 ## 8. Testing without a real Firebase project
 

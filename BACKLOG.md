@@ -111,3 +111,12 @@ lives only in chat history — if it's not here, treat it as not tracked.
   - [x] Landing on a planet actually launches that game for real (`navTo(id)` + `enter_<id>()`, the exact same call the flat grid's cards make) — the prototype's version only linked out to the homepage
   - [x] Dodgeable asteroids with a 3-shield HUD; losing all shields resets the current approach rather than the whole journey
 - **Notes:** Prototyped first as standalone `space-hub.html`, still in the repo unlinked from the app. One real bug caught in testing before it shipped: the "have you arrived" check compared the planet's rendered radius against a threshold it could mathematically never reach, so the ship would fly forever and never land.
+
+### F-016 · 汉字 CLAW — claw machine + read-aloud pronunciation check, 7th real game
+- **Status:** Done — `js/claw.js`
+- **Acceptance:**
+  - [x] Canvas claw machine: move left/right, drop to catch a word tile from a face-down pile (revealed only after catching, not shown in advance)
+  - [x] Read-aloud check via the Web Speech API, transcript graded by Claude through `/api/grade`'s new text-only path (no image) — first game to grade something other than a photo
+  - [x] Self-grade buttons always visible alongside the mic (not just as an error fallback) since speech recognition support varies a lot by browser/device
+  - [x] XP + high score ("best caught") + a session log entry once the round (all 10 words) completes, same pattern as the other games
+- **Notes:** Prototyped first as standalone `claw-machine-draft.html`. Two rounds of user feedback on the draft before building the real version: words were shown face-up in the pile (fixed to face-down, revealed only on catch) and the mic appeared to hang forever when speech recognition got no response (fixed with a 6s timeout that falls back to self-grade — this also surfaced that Claude artifacts sandbox microphone access entirely, so the mic itself could only be verified once deployed). Testing this one required real debugging, not just code review: `js/claw.js`'s `nextClawRound()` re-centers the claw after every catch, which broke an initial incremental-sweep test strategy that assumed continuous position tracking (caught only 6/10) — fixed by having every drop attempt independently re-establish position from the left clamp before moving to its target column.
