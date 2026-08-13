@@ -457,6 +457,71 @@
   <button id="hub-arrive-next" onclick="hubContinue()">🚀 CONTINUE JOURNEY</button>
 </div>
 
+<!-- CLAW MACHINE GAME -->
+<div id="view-claw" class="view">
+
+  <div id="claw-home" class="screen active">
+    <div class="back-btn" onclick="clawBackToApp()">
+      <span class="back-arrow">←</span>
+      <span class="back-label" style="color:#ff44aa">汉字 CLAW</span>
+    </div>
+    <div class="how-box">
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🕹️</span><span>Move the claw, then drop it to catch a word tile</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🎤</span><span>Read the caught character out loud into your mic</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🤖</span><span>AI grades it — or use self-grade any time</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🏆</span><span>Catch every word to finish the round</span></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div style="font-size:20px;margin-bottom:4px">⚡</div><div class="stat-num" id="claw-xp-val">0</div><div class="stat-lbl">XP</div></div>
+      <div class="stat"><div style="font-size:20px;margin-bottom:4px">🏆</div><div class="stat-num" id="claw-best-val">0</div><div class="stat-lbl">BEST CAUGHT</div></div>
+      <div class="stat"><div style="font-size:20px;margin-bottom:4px">📖</div><div class="stat-num" id="claw-vocab-count">0</div><div class="stat-lbl">VOCAB</div></div>
+    </div>
+    <button class="btn-launch" style="background:rgba(255,68,170,.1);border-color:#ff44aa;color:#ff44aa" onclick="startClawRound()">🕹️ START MACHINE</button>
+  </div>
+
+  <div id="claw-game" class="screen">
+    <div id="claw-hud"><span>CAUGHT <span id="claw-caught-val">0</span>/<span id="claw-total-val">0</span></span><span id="claw-state-lbl"></span></div>
+    <div id="claw-cabinet"><canvas id="claw-cv" width="600" height="300"></canvas></div>
+    <div class="ctrl-row">
+      <div class="ctrl-btn" id="claw-left-btn">◀ LEFT</div>
+      <div class="ctrl-btn" id="claw-drop-btn">⬇ DROP</div>
+      <div class="ctrl-btn" id="claw-right-btn">RIGHT ▶</div>
+    </div>
+  </div>
+
+  <div id="claw-speak" class="screen">
+    <div class="speak-card">
+      <div class="speak-lbl">YOU CAUGHT</div>
+      <div class="speak-char" id="claw-speak-char"></div>
+      <button class="mic-btn" id="claw-mic-btn" onclick="startListening()">🎤</button>
+      <div id="claw-mic-status">Tap the mic and say the word</div>
+      <div id="claw-transcript-box"></div>
+    </div>
+    <div class="self-grade-hint">OR SELF-GRADE — ALWAYS WORKS, MIC OR NOT</div>
+    <div class="self-grade-row">
+      <button class="sg-btn" onclick="clawSelfGrade('correct')" style="border:1px solid #00ff8855;color:#00ff88">✅ Got it</button>
+      <button class="sg-btn" onclick="clawSelfGrade('partial')" style="border:1px solid #ffcc0055;color:#ffcc00">💪 Almost</button>
+      <button class="sg-btn" onclick="clawSelfGrade('incorrect')" style="border:1px solid #ff446655;color:#ff4466">❌ Not yet</button>
+    </div>
+    <div class="feedback-card" id="claw-feedback-card">
+      <div class="fb-emoji" id="claw-fb-emoji"></div>
+      <div class="fb-label" id="claw-fb-label"></div>
+      <div class="fb-comment" id="claw-fb-comment"></div>
+      <div class="fb-answer"><div style="font-size:10px;color:#334d5c;letter-spacing:3px;margin-bottom:8px">PINYIN</div><div class="fb-py" id="claw-fb-py"></div></div>
+    </div>
+    <button id="claw-next-btn" class="next-btn2" style="border-color:#ff44aa;color:#ff44aa;background:rgba(255,68,170,.08)" onclick="nextClawRound()"></button>
+  </div>
+
+  <div id="claw-summary" class="screen">
+    <div class="sum2-title" style="color:#ffd700">MACHINE EMPTY! 🎉</div>
+    <div class="sum2-score" id="claw-sum-score">0</div>
+    <div class="sum2-list" id="claw-sum-list"></div>
+    <button class="btn-primary" style="border-color:#ff44aa;color:#ff44aa;background:rgba(255,68,170,.08)" onclick="startClawRound()">🕹️ PLAY AGAIN</button>
+    <button class="btn-secondary" onclick="clawBackToApp()">← HOME BASE</button>
+  </div>
+
+</div>
+
 <!-- DASHBOARD (admin) -->
 <div id="view-dashboard" class="view">
   <div class="back-btn" onclick="dashboardBackToApp()">

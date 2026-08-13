@@ -29,6 +29,10 @@ import {
 } from './dictation.js';
 import { enterDino, dinoBackToApp, startDinoRun, initCanvas as initDinoCanvas } from './dino.js';
 import { enterSpaceHub, spaceHubBackToApp, hubPlay, hubContinue, initCanvas as initHubCanvas } from './spacehub.js';
+import {
+  enterClaw, clawBackToApp, startClawRound, startListening, clawSelfGrade,
+  nextClawRound, initCanvas as initClawCanvas
+} from './claw.js';
 import { enterDashboard, dashboardBackToApp } from './dashboard.js';
 
 function togglePinyin() {
@@ -90,6 +94,7 @@ function boot() {
   initDictCanvas();
   initDinoCanvas();
   initHubCanvas();
+  initClawCanvas();
 
   document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
@@ -169,7 +174,15 @@ Object.assign(window, {
   enterSpaceHub: enterSpaceHub,
   spaceHubBackToApp: spaceHubBackToApp,
   hubPlay: hubPlay,
-  hubContinue: hubContinue
+  hubContinue: hubContinue,
+
+  // Claw
+  enter_claw: enterClaw,
+  clawBackToApp: clawBackToApp,
+  startClawRound: startClawRound,
+  startListening: startListening,
+  clawSelfGrade: clawSelfGrade,
+  nextClawRound: nextClawRound
 });
 
 boot();

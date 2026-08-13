@@ -13,7 +13,8 @@ export var GAMES = [
   { id: 'wall', icon: '🧱', name: '汉字 WALL', sub: 'character shooter', color: '#ff6b35' },
   { id: 'handwrite', icon: '✍️', name: '手写 TRACE', sub: 'handwriting + AI', color: '#22ffaa' },
   { id: 'dictation', icon: '🔊', name: '听写 DICTATION', sub: 'audio + handwriting', color: '#ffa500' },
-  { id: 'dino', icon: '🦖', name: '拼音 DINO', sub: 'jump the pinyin', color: '#ffd700' }
+  { id: 'dino', icon: '🦖', name: '拼音 DINO', sub: 'jump the pinyin', color: '#ffd700' },
+  { id: 'claw', icon: '🕹️', name: '汉字 CLAW', sub: 'catch it, say it', color: '#ff44aa' }
 ];
 
 export function navTo(viewId) {
