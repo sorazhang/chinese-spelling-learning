@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="color-scheme" content="dark"/>
+<title>汉字 CLAW – catch it, say it!</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Exo+2:wght@400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#1a1030,#0a0518 55%,#030106);color:#fff;font-family:'Exo 2',sans-serif;overflow-x:hidden;display:flex;align-items:center;justify-content:center}
+.star{position:fixed;border-radius:50%;background:#fff;pointer-events:none;animation:tw var(--d) var(--dl) ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.1}50%{opacity:.75}}
+@keyframes glow{0%,100%{text-shadow:0 0 10px currentColor}50%{text-shadow:0 0 26px currentColor}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,68,170,.5)}50%{box-shadow:0 0 0 14px rgba(255,68,170,0)}}
+
+.wrap{width:100%;max-width:640px;padding:16px}
+.screen{display:none}
+.screen.active{display:block;animation:pop .3s ease}
+
+#title{font-family:'Orbitron',monospace;font-size:clamp(22px,6vw,32px);font-weight:900;color:#ff44aa;letter-spacing:3px;text-align:center;animation:glow 2.5s ease-in-out infinite;margin-bottom:2px}
+#sub{text-align:center;font-size:10px;color:#5a3a6a;letter-spacing:4px;margin-bottom:14px}
+
+.how-box{background:rgba(255,68,170,.06);border:1px solid rgba(255,68,170,.25);border-radius:16px;padding:16px;margin-bottom:16px}
+.how-row{display:flex;gap:10px;margin-bottom:8px;align-items:flex-start;font-size:12px;color:#aa88bb}
+.how-row:last-child{margin-bottom:0}
+.stat-row{display:flex;gap:10px;margin-bottom:18px}
+.stat{flex:1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 6px;text-align:center}
+.stat-num{font-family:'Orbitron',monospace;font-size:17px;font-weight:700;color:#ff44aa}
+.stat-lbl{font-size:8px;color:#5a3a6a;letter-spacing:2px;margin-top:2px}
+.btn-primary{display:block;width:100%;padding:16px;background:rgba(255,68,170,.1);border:1.5px solid #ff44aa;border-radius:14px;color:#ff44aa;font-family:'Orbitron',monospace;font-size:14px;font-weight:900;letter-spacing:4px;cursor:pointer;text-align:center;box-shadow:0 0 20px rgba(255,68,170,.2)}
+.btn-secondary{display:block;width:100%;padding:12px;margin-top:10px;background:transparent;border:1px solid rgba(255,255,255,.12);border-radius:14px;color:#7755aa;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;cursor:pointer;text-align:center}
+
+#claw-hud{display:flex;justify-content:space-between;font-family:'Orbitron',monospace;font-size:12px;color:#ff44aa;margin-bottom:8px;letter-spacing:1px}
+#cabinet{position:relative;background:linear-gradient(180deg,#150a28,#0a0518);border:2px solid rgba(255,68,170,.35);border-radius:14px;overflow:hidden}
+#claw-cv{display:block;width:100%}
+.ctrl-row{display:flex;gap:8px;margin-top:10px}
+.ctrl-btn{flex:1;padding:16px;border-radius:12px;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:2px;cursor:pointer;text-align:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14);color:#cc99dd;user-select:none;touch-action:manipulation}
+.ctrl-btn:active{background:rgba(255,68,170,.18)}
+#drop-btn{background:rgba(255,68,170,.12);border-color:#ff44aa;color:#ff44aa}
+
+.speak-card{background:rgba(255,68,170,.06);border:2px solid rgba(255,68,170,.4);border-radius:18px;padding:24px 16px;text-align:center;margin-bottom:14px}
+.speak-lbl{font-size:10px;color:#5a3a6a;letter-spacing:4px;margin-bottom:10px}
+.speak-char{font-family:serif;font-size:56px;color:#fff;margin-bottom:6px}
+.mic-btn{width:84px;height:84px;border-radius:50%;background:rgba(255,68,170,.14);border:3px solid #ff44aa;color:#ff44aa;font-size:32px;cursor:pointer;margin:14px auto 8px;display:block}
+.mic-btn.listening{animation:pulse 1.2s infinite;background:rgba(255,68,170,.3)}
+#mic-status{font-size:11px;color:#7755aa;letter-spacing:1px;min-height:16px}
+#transcript-box{font-size:15px;color:#ffcc00;min-height:20px;margin-top:8px}
+
+.self-grade-row{display:flex;gap:8px;margin-top:14px}
+.sg-btn{flex:1;padding:10px 4px;background:rgba(255,255,255,.04);border-radius:10px;font-size:11px;cursor:pointer;text-align:center}
+
+#feedback-card{border-radius:14px;padding:14px 16px;margin-top:14px;text-align:center;display:none;animation:pop .35s ease}
+#fb-emoji{font-size:28px;margin-bottom:6px}
+#fb-label{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;letter-spacing:2px;margin-bottom:6px}
+#fb-comment{font-size:12px;color:#aa88bb;margin-bottom:10px}
+#fb-answer{border-radius:10px;padding:10px 14px;background:rgba(255,68,170,.06);border:1px solid rgba(255,68,170,.2)}
+#fb-py{font-size:12px;color:#ff44aa;margin-top:2px}
+#next-btn{display:none;width:100%;padding:14px;margin-top:12px;background:rgba(255,68,170,.1);border:1px solid #ff44aa;border-radius:13px;color:#ff44aa;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:3px;cursor:pointer;text-align:center}
+
+.sum-title{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;letter-spacing:2px;text-align:center;margin-bottom:6px;color:#ffd700}
+.sum-score{font-family:'Orbitron',monospace;font-weight:900;font-size:56px;line-height:1;text-align:center;margin-bottom:14px;color:#ff44aa}
+.sum-list{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;margin-bottom:16px}
+.sl-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+.sl-row:last-child{border-bottom:none}
+
+#note{font-size:10.5px;color:#5a3a6a;text-align:center;margin-top:14px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div id="title">汉字 CLAW</div>
+  <div id="sub">CATCH A WORD · READ IT OUT LOUD</div>
+
+  <div id="home" class="screen active">
+    <div class="how-box">
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🕹️</span><span>Move the claw, then drop it to catch a word tile</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🎤</span><span>Read the caught character out loud into your mic</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🤖</span><span>Get graded — correct, partial, or try again</span></div>
+      <div class="how-row"><span style="font-size:16px;flex-shrink:0">🏆</span><span>Catch every word to finish the round</span></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-num" id="home-xp">0</div><div class="stat-lbl">XP</div></div>
+      <div class="stat"><div class="stat-num" id="home-caught">0</div><div class="stat-lbl">BEST CAUGHT</div></div>
+      <div class="stat"><div class="stat-num" id="home-vocab">0</div><div class="stat-lbl">VOCAB</div></div>
+    </div>
+    <button class="btn-primary" onclick="startRound()">🕹️ START MACHINE</button>
+    <div id="note">Draft preview — speech recognition is real if your browser/device supports it, grading here is a simple local placeholder. Real AI grading via Claude gets wired in once this joins the app.</div>
+  </div>
+
+  <div id="claw-screen" class="screen">
+    <div id="claw-hud"><span>CAUGHT <span id="caught-val">0</span>/<span id="total-val">0</span></span><span id="claw-state-lbl"></span></div>
+    <div id="cabinet"><canvas id="claw-cv" width="600" height="300"></canvas></div>
+    <div class="ctrl-row">
+      <div class="ctrl-btn" id="left-btn">◀ LEFT</div>
+      <div class="ctrl-btn" id="drop-btn">⬇ DROP</div>
+      <div class="ctrl-btn" id="right-btn">RIGHT ▶</div>
+    </div>
+  </div>
+
+  <div id="speak-screen" class="screen">
+    <div class="speak-card">
+      <div class="speak-lbl">YOU CAUGHT</div>
+      <div class="speak-char" id="speak-char"></div>
+      <button class="mic-btn" id="mic-btn" onclick="startListening()">🎤</button>
+      <div id="mic-status">Tap the mic and say the word</div>
+      <div id="transcript-box"></div>
+    </div>
+    <div class="self-grade-row" id="self-grade-row" style="display:none">
+      <button class="sg-btn" onclick="selfGrade('correct')" style="border:1px solid #00ff8855;color:#00ff88">✅ Got it</button>
+      <button class="sg-btn" onclick="selfGrade('partial')" style="border:1px solid #ffcc0055;color:#ffcc00">💪 Almost</button>
+      <button class="sg-btn" onclick="selfGrade('incorrect')" style="border:1px solid #ff446655;color:#ff4466">❌ Not yet</button>
+    </div>
+    <div id="feedback-card">
+      <div id="fb-emoji"></div>
+      <div id="fb-label"></div>
+      <div id="fb-comment"></div>
+      <div id="fb-answer"><div style="font-size:9px;color:#5a3a6a;letter-spacing:2px;margin-bottom:6px">PINYIN</div><div id="fb-py"></div></div>
+    </div>
+    <button id="next-btn" onclick="nextRound()"></button>
+  </div>
+
+  <div id="summary" class="screen">
+    <div class="sum-title">MACHINE EMPTY! 🎉</div>
+    <div class="sum-score" id="sum-score">0</div>
+    <div class="sum-list" id="sum-list"></div>
+    <button class="btn-primary" onclick="startRound()">🕹️ PLAY AGAIN</button>
+    <button class="btn-secondary" onclick="goHome()">← HOME</button>
+  </div>
+</div>
+
+<script>
+var VOCAB = [
+  {char:"环保袋",py:"huán bǎo dài",en:"eco / reusable bag"},
+  {char:"组屋楼下",py:"zǔ wū lóu xià",en:"downstairs of the flat"},
+  {char:"停车场",py:"tíng chē chǎng",en:"car park"},
+  {char:"几辆汽车",py:"jǐ liàng qì chē",en:"several cars"},
+  {char:"灯一直亮着",py:"dēng yī zhí liàng zhe",en:"lights kept on"},
+  {char:"所以",py:"suǒ yǐ",en:"therefore / so"},
+  {char:"一张纸",py:"yī zhāng zhǐ",en:"a piece of paper"},
+  {char:"日用品",py:"rì yòng pǐn",en:"daily necessities"},
+  {char:"认为",py:"rèn wéi",en:"to think / believe"},
+  {char:"责任感",py:"zé rèn gǎn",en:"sense of responsibility"}
+];
+
+function buildStars(){for(var i=0;i<70;i++){var s=document.createElement('div');s.className='star';s.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;width:'+(Math.random()*1.6+.3)+'px;height:'+(Math.random()*1.6+.3)+'px;--d:'+(Math.random()*3+2)+'s;--dl:'+(Math.random()*6)+'s';document.body.appendChild(s);}}
+buildStars();
+
+var xp = 0, bestCaught = 0;
+try { xp = parseInt(localStorage.getItem('claw_draft_xp')) || 0; bestCaught = parseInt(localStorage.getItem('claw_draft_best')) || 0; } catch(e) {}
+
+function showScreen(id){
+  var els = document.querySelectorAll('.screen');
+  for (var i=0;i<els.length;i++) els[i].classList.remove('active');
+  document.getElementById(id).classList.add('active');
+}
+function goHome(){
+  document.getElementById('home-xp').textContent = xp;
+  document.getElementById('home-caught').textContent = bestCaught;
+  document.getElementById('home-vocab').textContent = VOCAB.length;
+  showScreen('home');
+}
+
+// ── claw machine ─────────────────────────────────────────────────────────
+var cv = document.getElementById('claw-cv');
+var ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var RAIL_Y = 26, BIN_TOP = 190, BIN_BOTTOM = 270;
+var CATCH_RADIUS = 46;
+
+var pile, clawX, clawY, clawState, movingDir, caughtTile, results, raf, lastTs;
+
+function layoutPile(){
+  pile = [];
+  var cols = 5, rows = 2;
+  var i = 0;
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      if (i >= queue.length) break;
+      var baseX = 60 + c*(W-120)/(cols-1);
+      var baseY = BIN_TOP + 20 + r*40;
+      pile.push({
+        item: queue[i],
+        x: baseX + (Math.random()-0.5)*14,
+        y: baseY + (Math.random()-0.5)*10,
+        caught: false
+      });
+      i++;
+    }
+  }
+}
+
+function shuffle(a){var r=a.slice();for(var i=r.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=r[i];r[i]=r[j];r[j]=t;}return r;}
+
+var queue = [], caughtCount = 0;
+
+function startRound(){
+  queue = shuffle(VOCAB);
+  caughtCount = 0;
+  results = [];
+  document.getElementById('total-val').textContent = queue.length;
+  document.getElementById('caught-val').textContent = 0;
+  clawX = W/2; clawY = RAIL_Y; clawState = 'idle'; movingDir = 0; caughtTile = null;
+  layoutPile();
+  showScreen('claw-screen');
+  lastTs = null;
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(loop);
+}
+
+function drawCabinet(){
+  ctx.clearRect(0,0,W,H);
+  var bg = ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0, '#1a0f30'); bg.addColorStop(1, '#0a0518');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+  ctx.strokeStyle = 'rgba(255,68,170,.4)';
+  ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(0, RAIL_Y-6); ctx.lineTo(W, RAIL_Y-6); ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,68,170,.06)';
+  ctx.fillRect(20, BIN_TOP, W-40, BIN_BOTTOM-BIN_TOP);
+  ctx.strokeStyle = 'rgba(255,68,170,.3)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(20, BIN_TOP, W-40, BIN_BOTTOM-BIN_TOP);
+
+  for (var i = 0; i < pile.length; i++) {
+    var t = pile[i];
+    if (t.caught) continue;
+    ctx.fillStyle = 'rgba(255,255,255,.06)';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(t.x-26, t.y-16, 52, 32, 8) : ctx.rect(t.x-26, t.y-16, 52, 32);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,68,170,.4)';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+    ctx.font = "18px serif";
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(t.item.char.slice(0,2), t.x, t.y);
+  }
+}
+
+function drawClaw(){
+  ctx.strokeStyle = '#ffcc00';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(clawX, RAIL_Y);
+  ctx.lineTo(clawX, clawY);
+  ctx.stroke();
+
+  ctx.save();
+  ctx.translate(clawX, clawY);
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 3.5;
+  ctx.lineCap = 'round';
+  var spread = clawState === 'closed' ? 5 : 13;
+  ctx.beginPath(); ctx.moveTo(-spread,0); ctx.lineTo(-spread*0.4,16); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(spread,0); ctx.lineTo(spread*0.4,16); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.fillStyle = '#ffd700'; ctx.fill();
+  ctx.restore();
+
+  if (caughtTile) {
+    ctx.font = "16px serif";
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText(caughtTile.item.char.slice(0,2), clawX, clawY + 24);
+  }
+}
+
+function loop(ts){
+  var dt = lastTs ? Math.min(ts-lastTs, 50) : 16;
+  lastTs = ts;
+
+  if (clawState === 'idle' && movingDir !== 0) {
+    clawX = Math.max(40, Math.min(W-40, clawX + movingDir*0.32*dt));
+  }
+  if (clawState === 'dropping') {
+    clawY += 0.42*dt;
+    if (clawY >= BIN_TOP + 30) {
+      clawY = BIN_TOP + 30;
+      tryCatch();
+      clawState = 'rising';
+    }
+  }
+  if (clawState === 'rising') {
+    clawY -= 0.42*dt;
+    if (clawY <= RAIL_Y) {
+      clawY = RAIL_Y;
+      if (caughtTile) { onCaught(caughtTile); return; }
+      clawState = 'idle';
+      document.getElementById('claw-state-lbl').textContent = '';
+    }
+  }
+
+  drawCabinet();
+  drawClaw();
+  raf = requestAnimationFrame(loop);
+}
+
+function tryCatch(){
+  var best = null, bestDist = CATCH_RADIUS;
+  for (var i = 0; i < pile.length; i++) {
+    var t = pile[i];
+    if (t.caught) continue;
+    var d = Math.abs(t.x - clawX);
+    if (d < bestDist) { bestDist = d; best = t; }
+  }
+  if (best) { best.caught = true; caughtTile = best; clawState = 'closed'; }
+}
+
+function onCaught(tile){
+  cancelAnimationFrame(raf);
+  document.getElementById('speak-char').textContent = tile.item.char;
+  document.getElementById('transcript-box').textContent = '';
+  document.getElementById('mic-status').textContent = 'Tap the mic and say the word';
+  document.getElementById('mic-btn').classList.remove('listening');
+  document.getElementById('self-grade-row').style.display = 'none';
+  document.getElementById('feedback-card').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'none';
+  currentTile = tile;
+  showScreen('speak-screen');
+}
+
+document.getElementById('left-btn').addEventListener('mousedown', function(){ movingDir = -1; });
+document.getElementById('right-btn').addEventListener('mousedown', function(){ movingDir = 1; });
+document.addEventListener('mouseup', function(){ movingDir = 0; });
+document.getElementById('left-btn').addEventListener('touchstart', function(e){ e.preventDefault(); movingDir = -1; }, {passive:false});
+document.getElementById('right-btn').addEventListener('touchstart', function(e){ e.preventDefault(); movingDir = 1; }, {passive:false});
+document.addEventListener('touchend', function(){ movingDir = 0; });
+document.getElementById('drop-btn').addEventListener('click', function(){
+  if (clawState !== 'idle') return;
+  clawState = 'dropping';
+  document.getElementById('claw-state-lbl').textContent = 'DROPPING...';
+});
+
+// ── speak + grade ────────────────────────────────────────────────────────
+var currentTile = null;
+var SpeechCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function startListening(){
+  if (!SpeechCtor) {
+    document.getElementById('mic-status').textContent = 'Speech recognition not available on this device — use self-grade below';
+    document.getElementById('self-grade-row').style.display = 'flex';
+    return;
+  }
+  var rec = new SpeechCtor();
+  rec.lang = 'zh-CN';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  document.getElementById('mic-btn').classList.add('listening');
+  document.getElementById('mic-status').textContent = 'Listening...';
+  rec.onresult = function(e){
+    var transcript = e.results[0][0].transcript;
+    document.getElementById('transcript-box').textContent = '"' + transcript + '"';
+    gradeTranscript(transcript);
+  };
+  rec.onerror = function(e){
+    document.getElementById('mic-btn').classList.remove('listening');
+    document.getElementById('mic-status').textContent = 'Could not hear you (' + e.error + ') — use self-grade below';
+    document.getElementById('self-grade-row').style.display = 'flex';
+  };
+  rec.onend = function(){
+    document.getElementById('mic-btn').classList.remove('listening');
+  };
+  try { rec.start(); } catch (err) {
+    document.getElementById('mic-status').textContent = 'Could not start microphone — use self-grade below';
+    document.getElementById('self-grade-row').style.display = 'flex';
+  }
+}
+
+// Placeholder local grading for this draft only — the real app sends the
+// transcript + target word to Claude via /api/grade for a much more
+// forgiving, nuanced verdict instead of this exact-substring check.
+function gradeTranscript(transcript){
+  var clean = transcript.replace(/[，。！？\s]/g, '');
+  var grade = clean.indexOf(currentTile.item.char) !== -1 ? 'correct'
+    : clean.length > 0 ? 'partial' : 'incorrect';
+  var comments = { correct: 'Nailed it!', partial: 'Close — keep practising!', incorrect: "Didn't quite catch that." };
+  showFeedback(grade, comments[grade]);
+}
+
+function selfGrade(g){
+  var c = { correct: 'Great job!', partial: 'Good effort!', incorrect: 'Keep practising!' };
+  showFeedback(g, c[g]);
+}
+
+function showFeedback(grade, comment){
+  var GC = { correct:'#00ff88', partial:'#ffcc00', incorrect:'#ff4466' };
+  var GE = { correct:'⭐', partial:'💪', incorrect:'❌' };
+  var GL = { correct:'CORRECT! +30 XP', partial:'PARTIAL! +10 XP', incorrect:'KEEP PRACTISING' };
+  var col = GC[grade] || '#ff9900';
+  var earned = grade === 'correct' ? 30 : grade === 'partial' ? 10 : 0;
+  xp += earned;
+  try { localStorage.setItem('claw_draft_xp', xp); } catch(e) {}
+
+  var fc = document.getElementById('feedback-card');
+  fc.style.display = 'block';
+  fc.style.background = 'rgba(255,255,255,.03)';
+  fc.style.border = '1px solid ' + col + '55';
+  document.getElementById('fb-emoji').textContent = GE[grade] || '⚠️';
+  document.getElementById('fb-label').textContent = GL[grade] || '';
+  document.getElementById('fb-label').style.color = col;
+  document.getElementById('fb-comment').textContent = comment;
+  document.getElementById('fb-py').textContent = currentTile.item.py + ' · ' + currentTile.item.en;
+  document.getElementById('self-grade-row').style.display = 'none';
+
+  var nb = document.getElementById('next-btn');
+  nb.style.display = 'block';
+  caughtCount++;
+  document.getElementById('caught-val').textContent = caughtCount;
+  nb.textContent = caughtCount < queue.length ? 'NEXT CATCH →' : '🏁 FINISH ROUND';
+  results.push({ item: currentTile.item, grade: grade });
+}
+
+function nextRound(){
+  if (caughtCount >= queue.length) {
+    showSummary();
+    return;
+  }
+  clawX = W/2; clawY = RAIL_Y; clawState = 'idle'; movingDir = 0; caughtTile = null;
+  showScreen('claw-screen');
+  lastTs = null;
+  raf = requestAnimationFrame(loop);
+}
+
+function showSummary(){
+  var correct = results.filter(function(r){ return r.grade === 'correct'; }).length;
+  if (caughtCount > bestCaught) {
+    bestCaught = caughtCount;
+    try { localStorage.setItem('claw_draft_best', bestCaught); } catch(e) {}
+  }
+  document.getElementById('sum-score').textContent = correct + '/' + results.length;
+  var list = document.getElementById('sum-list');
+  list.innerHTML = '';
+  results.forEach(function(r){
+    var GE = { correct:'✅', partial:'💪', incorrect:'❌' };
+    var row = document.createElement('div');
+    row.className = 'sl-row';
+    row.innerHTML = '<span>'+(GE[r.grade]||'⏭')+'</span><span style="font-family:serif;font-size:16px;flex:1">'+r.item.char+'</span><span style="font-size:10px;color:#7755aa">'+r.item.py+'</span>';
+    list.appendChild(row);
+  });
+  showScreen('summary');
+}
+
+goHome();
+</script>
+</body>
+</html>
