@@ -241,34 +241,31 @@ async function main() {
   await studentPage.click('#claw-home >> text=START MACHINE');
   await studentPage.waitForSelector('#claw-game.active');
 
-  // 5 columns of tiles, 2 stacked per column (10 total), spread across the
-  // 40-560px clamped range. Rather than timing a claw move to land exactly
-  // on a column (fragile — real setTimeout/rAF jitter of even ~100ms is
-  // enough to blow past the 46px catch radius), reset to the left clamp
-  // (timing-independent — any hold long enough guarantees the same exact
-  // position) and sweep right in small steps dense enough that at least
-  // two stops fall within radius of every column, dropping at each one.
-  async function clawSweep(page) {
-    await holdButton(page, '#claw-left-btn', 1700);
-    var stepMs = 125; // ~40px per step — denser than the 46px catch radius
-    var maxSteps = 14; // 40 + 14×40 = 600px, covers the full clamped range
-    for (var step = 0; step <= maxSteps; step++) {
-      if (await page.locator('#claw-summary.active').count()) return;
-      if (!(await page.locator('#claw-game.active').count())) return;
-      if (step > 0) await holdButton(page, '#claw-right-btn', stepMs);
-      await page.click('#claw-drop-btn');
-      await page.waitForTimeout(1000);
-      if (await page.locator('#claw-speak.active').count()) {
-        await page.click('#claw-speak >> text=Got it');
-        await page.waitForSelector('#claw-next-btn:visible');
-        await page.click('#claw-next-btn');
-        await page.waitForTimeout(150);
+  // 5 columns of tiles, 2 stacked per column (10 total). js/claw.js's
+  // nextClawRound() re-centers clawX after every successful catch, so each
+  // drop attempt must independently re-establish position from the left
+  // clamp (a hold long enough always lands at the exact same clamped x,
+  // regardless of where the claw was) rather than assuming continuity from
+  // the previous attempt — confirmed against the running app: an earlier
+  // version of this test that swept incrementally without re-resetting
+  // only caught 6/10 because catches kept silently resetting its assumed
+  // position out from under it.
+  var colRightMs = [0, 460, 830, 1210, 1590]; // ms of RIGHT-hold from the left clamp, per column
+  outer:
+  for (var ci = 0; ci < colRightMs.length; ci++) {
+    for (var attempt = 0; attempt < 3; attempt++) { // 2 tiles per column + 1 spare attempt
+      if (await studentPage.locator('#claw-summary.active').count()) break outer;
+      await holdButton(studentPage, '#claw-left-btn', 1700);
+      if (colRightMs[ci] > 0) await holdButton(studentPage, '#claw-right-btn', colRightMs[ci]);
+      await studentPage.click('#claw-drop-btn');
+      await studentPage.waitForTimeout(1000);
+      if (await studentPage.locator('#claw-speak.active').count()) {
+        await studentPage.click('#claw-speak >> text=Got it');
+        await studentPage.waitForSelector('#claw-next-btn:visible');
+        await studentPage.click('#claw-next-btn');
+        await studentPage.waitForTimeout(150);
       }
     }
-  }
-  await clawSweep(studentPage);
-  if (!(await studentPage.locator('#claw-summary.active').count())) {
-    await clawSweep(studentPage); // mop-up pass for anything the first sweep's steps straddled
   }
   await studentPage.waitForSelector('#claw-summary.active', { timeout: 5000 });
   assert(store.progress['owen-uid']['c4_claw'] && store.progress['owen-uid']['c4_claw'].xp === 10 * 30, 'progress/owen-uid/c4_claw xp = 10 × 30 (all 10 words caught and self-graded correct)');
